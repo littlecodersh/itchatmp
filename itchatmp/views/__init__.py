@@ -1,7 +1,7 @@
 import time
 import lxml.etree as ET
 
-from itchatmp.content import NEWS, MUSIC
+from itchatmp.content import VIDEO, MUSIC, NEWS
 from itchatmp.exceptions import ItChatSDKException
 from .templates import get_template
 
@@ -31,7 +31,17 @@ def construct_msg(msgDict, replyDict):
         except:
             raise ItChatSDKException(
                 'Wrong format of reply message: ' + str(replyDict))
-    if replyDict['MsgType'] == NEWS:
+    def _fill_key(d, k):
+        d[k] = d.get(k, '')
+    if replyDict['MsgType'] == VIDEO:
+        for k in ('Title', 'Description'):
+            _fill_key(replyDict, k)
+    elif replyDict['MsgType'] == MUSIC:
+        for k in ('Title', 'Description', 'MusicURL', 'HQMusicUrl'):
+            _fill_key(replyDict, k)
+    elif replyDict['MsgType'] == NEWS:
+        for k in ('Title', 'Description', 'PicUrl', 'Url'):
+            _fill_key(replyDict, k)
         if not 0 < len(replyDict.get('Articles',{})) < 10:
             raise ItChatSDKException(
                 'A news must have 1-9 articles')
@@ -39,11 +49,4 @@ def construct_msg(msgDict, replyDict):
         replyDict['Articles'] = ''.join(
             [_render(get_template('article'), msgDict, article)
             for article in replyDict['Articles']])
-    elif replyDict['MsgType'] == MUSIC:
-        template = get_template(MUSIC)
-        if replyDict.get('ThumbMediaId') is None:
-            template = template(1)
-        else:
-            template = template(0)
-        return _render(template, msgDict, replyDict)
     return _render(get_template(replyDict['MsgType']), msgDict, replyDict)
