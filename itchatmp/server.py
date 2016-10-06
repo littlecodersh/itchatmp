@@ -3,9 +3,10 @@ from tornado.web import RequestHandler
 from concurrent.futures import ThreadPoolExecutor
 
 from .content import (NORMAL, COMPATIBLE, SAFE,
-    TEXT)
+    TEXT, IMAGE, VOICE, VIDEO, MUSIC, NEWS, TRANSFER)
 from .controllers.oauth import oauth
 from .views import construct_msg, deconstruct_msg
+from .exceptions import ItChatSDKException
 
 class WechatConfig(object):
     def __init__(self, token='', appId='', appSecret='',
@@ -37,10 +38,9 @@ class WechatServer(object):
             if 1: # valid:
                 msgDict = deconstruct_msg(
                     handler.request.body.decode('utf8', 'replace'))
-                replyType, replyDict = self.__get_reply_fn(
-                    msgDict['MsgType'])(msgDict)
+                replyDict = self.__get_reply_fn(msgDict['MsgType'])(msgDict)
                 if replyType is not None:
-                    return construct_msg(replyType, msgDict, replyDict)
+                    return construct_msg(msgDict, replyDict)
         return get_fn, post_fn
     def __construct_handler(self, isWsgi):
         get_fn, post_fn = self.__construct_get_post_fn()
@@ -77,8 +77,12 @@ class WechatServer(object):
             tornado.ioloop.IOLoop.current().start()
     def msg_register(self, msgType):
         def _msg_register(fn):
-            if msgType in (TEXT, ):
+            if msgType in (TEXT, TEXT, IMAGE,
+                    VOICE, VIDEO, MUSIC, NEWS, TRANSFER)
                 self.__replyFnDict[msgType] = fn
+            else:
+                raise ItChatSDKException(
+                    'Known type register "%s"' % msgType)
             return fn
         return _msg_register
     def __get_reply_fn(self, msgType):
