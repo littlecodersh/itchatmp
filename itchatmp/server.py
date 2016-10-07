@@ -1,4 +1,5 @@
 import functools, time, os
+from base64 import b64decode
 
 import tornado
 from tornado.web import RequestHandler
@@ -7,7 +8,7 @@ from concurrent.futures import ThreadPoolExecutor
 from .content import (NORMAL, COMPATIBLE, SAFE,
     INCOME_MSG, OUTCOME_MSG,
     SERVER_WAIT_TIME)
-from .controllers.oauth import oauth
+from .controllers.oauth import oauth, decrypt_msg, encrypt_msg
 from .views import construct_msg, deconstruct_msg
 from .exceptions import ItChatSDKException
 
@@ -18,6 +19,11 @@ class WechatConfig(object):
         self.appId, self.appSecret = appId, appSecret
         self.encryptMode = encryptMode
         self.encodingAesKey = encodingAesKey
+        try:
+            self._encodingAesKey = b64decode(
+                self.encodingAesKey.encode('utf8') + b'=')
+        except:
+            raise ItChatSDKException('Wrong AES Key format')
     def verify(self):
         return True
 
@@ -43,17 +49,22 @@ class WechatServer(object):
                 + [self.config.token]))
             if valid: return handler.get_argument('echostr', '')
         def post_fn(handler):
-            valid = oauth(*([handler.get_argument(key, '') for
+            tns = [handler.get_argument(key, '') for
                 key in ('timestamp', 'nonce', 'signature')]
-                + [self.config.token]))
+            valid = oauth(*(tns + [self.config.token]))
             if 1: # valid:
                 msgDict = deconstruct_msg(
                     handler.request.body.decode('utf8', 'replace'))
+                if self.config.encryptMode == SAFE:
+                    msgDict = decrypt_msg(*(tns + [self.config, msgDict]))
                 replyDict = self.__get_reply_fn(msgDict['MsgType'])(msgDict)
                 if replyDict is None:
                     return ''
                 elif replyDict.get('MsgType') in OUTCOME_MSG:
-                    return construct_msg(msgDict, replyDict)
+                    if self.config.encryptMode == SAFE:
+                        return encrypt_msg(*(tns + [self.config, msgDict, replyDict]))
+                    else:
+                        return construct_msg(msgDict, replyDict)
                 else:
                     raise ItChatSDKException(
                         'Unknown reply message type "%s"' % replyDict.get('MsgType'))

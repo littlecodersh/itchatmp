@@ -1,7 +1,7 @@
 import time
 import lxml.etree as ET
 
-from itchatmp.content import VIDEO, MUSIC, NEWS
+from itchatmp.content import VIDEO, MUSIC, NEWS, ENCRYPT
 from itchatmp.exceptions import ItChatSDKException
 from .templates import get_template
 
@@ -15,6 +15,8 @@ def deconstruct_msg(msg):
             else:
                 d[i.tag] = i.text
     _get_dict(ET.fromstring(msg), r)
+    if r.get('Encrypt') is not None:
+        r['MsgType'] = r.get('MsgType') or ENCRYPT
     return r
 
 def construct_msg(msgDict, replyDict):

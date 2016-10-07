@@ -1,6 +1,6 @@
 from itchatmp.content import (TEXT,
     IMAGE, VOICE, VIDEO, MUSIC,
-    NEWS, TRANSFER)
+    NEWS, TRANSFER, ENCRYPT)
 
 templateDict = {
     TEXT:
@@ -94,6 +94,15 @@ templateDict = {
     <FromUserName><![CDATA[{FromUserName}]]></FromUserName>
     <CreateTime>{CreateTime}</CreateTime>
     <MsgType><![CDATA[transfer_customer_service]]></MsgType>
+    </xml>
+    ''',
+    ENCRYPT: 
+    u'''
+    <xml>
+    <Encrypt><![CDATA[{Encrypt}]]></Encrypt>
+    <MsgSignature><![CDATA[{MsgSignature}]]></MsgSignature>
+    <TimeStamp>{TimeStamp}</TimeStamp>
+    <Nonce><![CDATA[{Nonce}]]></Nonce>
     </xml>
     ''',
 }

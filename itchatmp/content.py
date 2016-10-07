@@ -19,6 +19,7 @@ class _EVENT(object):
     def __eq__(self, other):
         return 'event' == other
 EVENT = _EVENT()
+ENCRYPT = 'encrypt'
 
 INCOME_MSG = (TEXT, IMAGE, VOICE, VIDEO, SHORT_VIDEO, LOCATION,
     LINK, EVENT, EVENT.SUBSCRIBE, EVENT.SCAN, EVENT.LOCATION,
