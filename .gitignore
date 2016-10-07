@@ -3,4 +3,5 @@ dist/*
 itchatmp.egg-info/*
 *.pyc
 *.swp
+*.pkl
 test.py

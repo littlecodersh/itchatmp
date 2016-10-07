@@ -46,7 +46,7 @@ setup(
     # simple. Or you can use find_packages().
     packages=['itchatmp',],
 
-    install_requires=['futures', 'lxml', 'pycrypto'],
+    install_requires=['futures', 'lxml', 'pycrypto', 'requests'],
 
     # List additional groups of dependencies here
     extras_require={},
