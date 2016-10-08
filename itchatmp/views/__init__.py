@@ -1,11 +1,17 @@
-import time
+import time, logging
 import lxml.etree as ET
 
 from itchatmp.content import VIDEO, MUSIC, NEWS, ENCRYPT
 from itchatmp.exceptions import ItChatSDKException
 from .templates import get_template
 
+logger = logging.getLogger('itchatmp')
+
 def deconstruct_msg(msg):
+    ''' deconstruct xml msg from string to dict
+     * use lxml to save time
+     * if deconstruct failed will return an empty dict
+    '''
     r = {}
     def _get_dict(msg, d):
         for i in msg:
@@ -14,12 +20,18 @@ def deconstruct_msg(msg):
                 _get_dict(i, d[i.tag])
             else:
                 d[i.tag] = i.text
-    _get_dict(ET.fromstring(msg), r)
+    try:
+        _get_dict(ET.fromstring(msg), r)
+    except Exception as e:
+        logger.debug(e.message)
     if r.get('Encrypt') is not None:
         r['MsgType'] = r.get('MsgType') or ENCRYPT
     return r
 
 def construct_msg(msgDict, replyDict):
+    ''' construct xml msg from dict to string
+     * if deconstruct failed will return an empty string
+    '''
     def _render(template, msgDict, replyDict):
         try:
             return template.format(
@@ -28,11 +40,11 @@ def construct_msg(msgDict, replyDict):
                 CreateTime=int(time.time()),
                 **replyDict)
         except KeyError as e:
-            raise ItChatSDKException(
-                'Missing message element "%s"' % e.message)
+            logger.debug('Missing message element "%s"' % e.message)
         except:
-            raise ItChatSDKException(
+            logger.debug(
                 'Wrong format of reply message: ' + str(replyDict))
+        return ''
     def _fill_key(d, k):
         d[k] = d.get(k, '')
     if replyDict['MsgType'] == VIDEO:

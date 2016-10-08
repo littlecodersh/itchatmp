@@ -5,7 +5,7 @@ import requests
 from itchatmp.server import WechatServer
 from itchatmp.utils import retry
 from itchatmp.models.accesstoken import get_access_token, store_access_token
-from itchatmp.controllers.returnvalues import parse_return_value
+from itchatmp.controllers.returnvalues import ReturnValue
 
 logger = logging.getLogger('itchatmp')
 
@@ -21,7 +21,7 @@ def update_access_token():
         store_access_token(r['access_token'], r['expires_in'])
         return True
     else:
-        r = parse_return_value(r)
+        r = ReturnValue(r)
         logger.debug('Failed to get token: %r' %r)
         return r
 

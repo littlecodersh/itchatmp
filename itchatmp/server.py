@@ -57,7 +57,10 @@ class WechatServer(object):
                     handler.request.body.decode('utf8', 'replace'))
                 if self.config.encryptMode == SAFE:
                     msgDict = decrypt_msg(*(tns + [self.config, msgDict]))
-                replyDict = self.__get_reply_fn(msgDict['MsgType'])(msgDict)
+                if not msgDict:
+                    return ''
+                else:
+                    replyDict = self.__get_reply_fn(msgDict['MsgType'])(msgDict)
                 if replyDict is None:
                     return ''
                 elif replyDict.get('MsgType') in OUTCOME_MSG:
@@ -110,7 +113,10 @@ class WechatServer(object):
             return tornado.wsgi.WSGIAdapter(app)
         else:
             app.listen(80)
-            self.ioLoop.start()
+            try:
+                self.ioLoop.start()
+            except:
+                self.ioLoop.stop()
     def msg_register(self, msgType):
         def _msg_register(fn):
             if msgType in INCOME_MSG:
