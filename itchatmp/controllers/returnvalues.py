@@ -6,18 +6,20 @@ TRANSLATION = {}
 
 class ReturnValue(dict):
     def __init__(self, returnValueDict):
-        dict.__init__(returnValueDict)
-        self.value = returnValueDict
+        for k, v in returnValueDict.items(): self[k] = v
         if TRANSLATE:
-            self.value['errmsg'] = \
-                TRANSLATION[TRANSLATE].get(self.value.get('errcode', '')) \
-                or self.value.get('errmsg', u'没有errmsg')
+            self['errmsg'] = \
+                TRANSLATION[TRANSLATE].get(self.get('errcode', '')) \
+                or self.get('errmsg', u'没有errmsg')
     def __nonzero__(self):
         return self.get('errcode', -1) == 0
     def __bool__(self):
         return self.__nonzero__()
+    def __str__(self):
+        return '{%s}' % ', '.join(
+            ['%s: %s' % (repr(k),repr(v)) for k,v in self.items()])
     def __repr__(self):
-        return '<ItchatmpReturnValue(%s)>' % self.value.__repr__()
+        return '<ItchatmpReturnValue: %s>' % self.__str__()
 
 TRANSLATION = {
     'Chinese': {

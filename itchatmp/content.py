@@ -1,3 +1,5 @@
+SERVER_URL = 'https://api.weixin.qq.com'
+
 NORMAL, COMPATIBLE, SAFE = 0, 1, 2
 
 TEXT = 'text'

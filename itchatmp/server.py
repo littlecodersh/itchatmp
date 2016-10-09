@@ -39,9 +39,9 @@ class WechatServer(object):
         self.ioLoop = tornado.ioloop.IOLoop.current()
     @staticmethod
     def instance():
-        if not hasattr(WechatServer, '__instance'):
-            WechatServer.__instance = WechatServer(WechatConfig(), None, None)
-        return WechatServer.__instance
+        if not hasattr(WechatServer, '_instance'):
+            WechatServer._instance = WechatServer(WechatConfig(), None, None)
+        return WechatServer._instance
     def __construct_get_post_fn(self):
         def get_fn(handler):
             valid = oauth(*([handler.get_argument(key, '') for

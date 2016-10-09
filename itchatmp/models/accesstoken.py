@@ -1,4 +1,6 @@
-import pickle
+import pickle, logging
+
+logger = logging.getLogger('itchatmp')
 
 class TmpStorage(object):
     ''' storage for test use
@@ -12,7 +14,7 @@ class TmpStorage(object):
             with open('storage.pkl', 'rb') as f:
                 self.__storageDict = pickle.load(f)
         except:
-            print('storage not found')
+            logger.debug('storage not found')
             self.__storageDict = {}
     def __store_locally(self):
         try:
@@ -28,7 +30,7 @@ class TmpStorage(object):
 
 __storage = TmpStorage()
 
-def get_access_token(self):
+def get_access_token():
     return __storage.get_access_token()
 
 def store_access_token(accessToken, expireTime):

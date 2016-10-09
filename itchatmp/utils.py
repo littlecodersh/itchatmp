@@ -13,7 +13,7 @@ def retry(n=3, waitTime=3):
                     return fn(*args, **kwargs)
                 except Exception as e:
                     logger.debug('%s failed. Count: %s. Info: %r' %
-                        fn.__name__, i + 1, e)
+                        (fn.__name__, i + 1, e))
                     if i + 1 == n:
                         logger.debug('%s failed. Reach max retry' %
                             fn.__name__)
