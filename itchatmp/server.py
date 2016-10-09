@@ -8,8 +8,8 @@ from concurrent.futures import ThreadPoolExecutor
 from .content import (NORMAL, COMPATIBLE, SAFE,
     INCOME_MSG, OUTCOME_MSG,
     SERVER_WAIT_TIME)
-from .controllers.oauth import oauth, decrypt_msg, encrypt_msg
 from .views import construct_msg, deconstruct_msg
+from .controllers.oauth import oauth, decrypt_msg, encrypt_msg
 from .exceptions import ItChatSDKException
 
 class WechatConfig(object):
@@ -29,10 +29,12 @@ class WechatConfig(object):
 
 class WechatServer(object):
     __replyFnDict = {}
-    def __init__(self, config, atStorage, userStorage, threadPoolNumber=None):
+    def __init__(self, config, atStorage, userStorage,
+            filterRequest=False, threadPoolNumber=None):
         self.config = config
         self.atStorage = atStorage
         self.userStorage = userStorage
+        self.filterRequest = filterRequest
         self.threadPoolNumber = threadPoolNumber or ((None
             if not hasattr(os, 'cpu_count') else os.cpu_count()) or 1) * 5
         self.isWsgi = False
@@ -42,13 +44,20 @@ class WechatServer(object):
         if not hasattr(WechatServer, '_instance'):
             WechatServer._instance = WechatServer(WechatConfig(), None, None)
         return WechatServer._instance
+    def _filter_request(self, request):
+        '''
+        will be defined in controllers.mpapi.common
+        '''
+        raise NotImplementedError()
     def __construct_get_post_fn(self):
         def get_fn(handler):
+            if not self._filter_request(handler): return ''
             valid = oauth(*([handler.get_argument(key, '') for
                 key in ('timestamp', 'nonce', 'signature')]
                 + [self.config.token]))
             if valid: return handler.get_argument('echostr', '')
         def post_fn(handler):
+            if not self._filter_request(handler): return ''
             tns = [handler.get_argument(key, '') for
                 key in ('timestamp', 'nonce', 'signature')]
             valid = oauth(*(tns + [self.config.token]))
@@ -99,10 +108,11 @@ class WechatServer(object):
                         pass
         return MainHandler
     def update_config(self, config=None, atStorage=None, userStorage=None,
-            threadPoolNumber=None):
+            filterRequest=None, threadPoolNumber=None):
         self.config = config or self.config
         self.atStorage = atStorage or self.atStorage
         self.userStorage = userStorage or self.userStorage
+        self.filterRequest = filterRequest or self.filterRequest
         self.threadPoolNumber = threadPoolNumber or self.threadPoolNumber
     def run(self, isWsgi=False, debug=True):
         self.isWsgi = isWsgi

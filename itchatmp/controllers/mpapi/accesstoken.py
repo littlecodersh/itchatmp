@@ -22,7 +22,7 @@ def auto_maintain_thread(firstCallResult=None):
     if not r:
         __server.ioLoop.call_later(
             (datetime.replace(datetime.now() + timedelta(days=1), 
-            hour=0, minute=5, second=0) - datetime.now()),
+            hour=0, minute=5, second=0) - datetime.now()).seconds,
             maintain_access_token)
     else:
         __server.ioLoop.call_later(r['expires_in'] - 30,

@@ -4,6 +4,8 @@ from .server import WechatConfig, WechatServer
 from .controllers.envtest import env_test
 from .controllers.mpapi import *
 
+from .log import logger
+
 __version__ = '0.0.0'
 
 # env_test()

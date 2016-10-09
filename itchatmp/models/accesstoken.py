@@ -1,11 +1,26 @@
 import pickle, logging
 
+from itchatmp.server import WechatServer
+
 logger = logging.getLogger('itchatmp')
 
-class TmpStorage(object):
+__server = WechatServer.instance()
+
+class AccessTokenStorage(object):
+    def get_access_token(self):
+        raise NotImplementedError()
+    def store_access_token(self, accessToken, expireTime):
+        raise NotImplementedError()
+    def get_server_list(self):
+        raise NotImplementedError()
+    def store_server_list(self, serverList, fetchTime):
+        raise NotImplementedError()
+
+class TestStorage(AccessTokenStorage):
     ''' storage for test use
         {
             'accessToken': ('', 0),
+            'serverList': ([], 0),
         }
     '''
     __storageDict = None
@@ -27,11 +42,18 @@ class TmpStorage(object):
     def store_access_token(self, accessToken, expireTime):
         self.__storageDict['accessToken'] = (accessToken, expireTime)
         self.__store_locally()
+        logger.debug('Access token updated')
+    def get_server_list(self):
+        return self.__storageDict.get('serverList', ([], 0))
+    def store_server_list(self, serverList, fetchTime):
+        self.__storageDict['serverList'] = (serverList, fetchTime)
+        self.__store_locally()
+        logger.debug('Server list updated')
 
-__storage = TmpStorage()
+if not __server.atStorage: __server.atStorage = TestStorage()
 
 def get_access_token():
-    return __storage.get_access_token()
+    return __server.atStorage.get_access_token()
 
 def store_access_token(accessToken, expireTime):
-    return __storage.store_access_token(accessToken, expireTime)
+    return __server.atStorage.store_access_token(accessToken, expireTime)
