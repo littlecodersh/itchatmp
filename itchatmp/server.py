@@ -37,10 +37,14 @@ class WechatServer(object):
         self.filterRequest = filterRequest
         self.threadPoolNumber = threadPoolNumber or ((None
             if not hasattr(os, 'cpu_count') else os.cpu_count()) or 1) * 5
-        self.isWsgi = False
         self.ioLoop = tornado.ioloop.IOLoop.current()
+        self.isWsgi = True
     @staticmethod
     def instance():
+        ''' singleton
+         * initial a fake server only for storing necessary info
+         * real server will be created in run
+        '''
         if not hasattr(WechatServer, '_instance'):
             WechatServer._instance = WechatServer(WechatConfig(), None, None)
         return WechatServer._instance

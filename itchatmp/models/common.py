@@ -51,9 +51,3 @@ class TestStorage(AccessTokenStorage):
         logger.debug('Server list updated')
 
 if not __server.atStorage: __server.atStorage = TestStorage()
-
-def get_access_token():
-    return __server.atStorage.get_access_token()
-
-def store_access_token(accessToken, expireTime):
-    return __server.atStorage.store_access_token(accessToken, expireTime)
