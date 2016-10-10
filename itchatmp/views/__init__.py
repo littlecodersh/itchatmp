@@ -2,7 +2,7 @@ import time, logging
 import lxml.etree as ET
 
 from itchatmp.content import VIDEO, MUSIC, NEWS, ENCRYPT
-from itchatmp.exceptions import ItChatSDKException
+from itchatmp.exceptions import ParameterError
 from .templates import get_template
 
 logger = logging.getLogger('itchatmp')
@@ -41,6 +41,8 @@ def construct_msg(msgDict, replyDict):
                 **replyDict)
         except KeyError as e:
             logger.debug('Missing message element "%s"' % e.message)
+        except UnicodeDecodeError as e:
+            logger.debug('All non-ascii values should be unicode like: u"value"')
         except:
             logger.debug(
                 'Wrong format of reply message: ' + str(replyDict))
@@ -57,7 +59,7 @@ def construct_msg(msgDict, replyDict):
         for k in ('Title', 'Description', 'PicUrl', 'Url'):
             _fill_key(replyDict, k)
         if not 0 < len(replyDict.get('Articles',{})) < 10:
-            raise ItChatSDKException(
+            raise ParameterError(
                 'A news must have 1-9 articles')
         replyDict['ArticleCount'] = len(replyDict['Articles'])
         replyDict['Articles'] = ''.join(

@@ -23,6 +23,7 @@ class ReturnValue(dict):
 
 TRANSLATION = {
     'Chinese': {
+        -10001: u'参数中所有非ascii字符串需要用Unicode形式传递，如：u"中文"',
         -1: u'系统繁忙，此时请开发者稍候再试',
         0: u'请求成功',
         40001: u'获取access_token时AppSecret错误，或者access_token无效。请开发者认真比对AppSecret的正确性，或查看是否正在为恰当的公众号调用接口',

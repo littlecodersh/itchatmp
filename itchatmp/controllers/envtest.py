@@ -1,6 +1,6 @@
 import socket
 
-from itchatmp.exceptions import ItChatEnvException
+from itchatmp.exceptions import EnvironmentError
 
 PYCRYPTO_WARNING = '''
 pycrypto is not installed correctly.
@@ -21,7 +21,7 @@ def env_test():
     try:
         from Crypto.Cipher import AES
     except:
-        raise ItChatEnvException(PYCRYPTO_WARNING)
+        raise EnvironmentError(PYCRYPTO_WARNING)
     try:
         s = socket.socket()
         s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
@@ -29,4 +29,4 @@ def env_test():
         s.listen(1)
         s.close()
     except:
-        raise ItChatEnvException(PORT_WARNING)
+        raise EnvironmentError(PORT_WARNING)

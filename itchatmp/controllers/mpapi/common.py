@@ -113,7 +113,6 @@ def filter_request(request):
             hour=0, minute=5, second=0) - datetime.now()).seconds,
             lambda: clear_server_list())
     if not __serverList: return True
-    print(request.remote_ip in __serverList)
-    print(request.remote_ip)
+    if not hasattr(request, 'remote_ip'): return False
     return request.remote_ip in __serverList
 __server._filter_request = filter_request

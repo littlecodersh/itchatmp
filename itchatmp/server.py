@@ -10,7 +10,7 @@ from .content import (NORMAL, COMPATIBLE, SAFE,
     SERVER_WAIT_TIME)
 from .views import construct_msg, deconstruct_msg
 from .controllers.oauth import oauth, decrypt_msg, encrypt_msg
-from .exceptions import ItChatSDKException
+from .exceptions import ParameterError
 
 class WechatConfig(object):
     def __init__(self, token='', appId='', appSecret='',
@@ -23,7 +23,7 @@ class WechatConfig(object):
             self._encodingAesKey = b64decode(
                 self.encodingAesKey.encode('utf8') + b'=')
         except:
-            raise ItChatSDKException('Wrong AES Key format')
+            raise ParameterError('Wrong AES Key format')
     def verify(self):
         return True
 
@@ -55,13 +55,15 @@ class WechatServer(object):
         raise NotImplementedError()
     def __construct_get_post_fn(self):
         def get_fn(handler):
-            if not self._filter_request(handler): return ''
+            if self.filterRequest and not self._filter_request(handler):
+                return ''
             valid = oauth(*([handler.get_argument(key, '') for
                 key in ('timestamp', 'nonce', 'signature')]
                 + [self.config.token]))
             if valid: return handler.get_argument('echostr', '')
         def post_fn(handler):
-            if not self._filter_request(handler): return ''
+            if self.filterRequest and not self._filter_request(handler):
+                return ''
             tns = [handler.get_argument(key, '') for
                 key in ('timestamp', 'nonce', 'signature')]
             valid = oauth(*(tns + [self.config.token]))
@@ -82,7 +84,7 @@ class WechatServer(object):
                     else:
                         return construct_msg(msgDict, replyDict)
                 else:
-                    raise ItChatSDKException(
+                    raise ParameterError(
                         'Unknown reply message type "%s"' % replyDict.get('MsgType'))
         return get_fn, post_fn
     def __construct_handler(self, isWsgi):
@@ -136,7 +138,7 @@ class WechatServer(object):
             if msgType in INCOME_MSG:
                 self.__replyFnDict[msgType] = fn
             else:
-                raise ItChatSDKException(
+                raise ParameterError(
                     'Known type register "%s"' % msgType)
             return fn
         return _msg_register

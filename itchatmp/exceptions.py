@@ -1,16 +1,14 @@
-class ItChatException(Exception):
+class BaseException(Exception):
     ''' exception base '''
     pass
 
-class ItChatSDKException(ItChatException):
-    ''' SDK error '''
+class ParameterError(BaseException):
     def __init__(self, message=''):
         self.message = message
     def __str__(self):
         return self.message
 
-class ItChatEnvException(ItChatException):
-    ''' SDK error '''
+class EnvironmentError(BaseException):
     def __init__(self, message=''):
         self.message = message
     def __str__(self):
