@@ -8,9 +8,11 @@ class ReturnValue(dict):
     def __init__(self, returnValueDict):
         for k, v in returnValueDict.items(): self[k] = v
         if TRANSLATE:
+            self['rawmsg'] = self.get('errmsg', '')
             self['errmsg'] = \
                 TRANSLATION[TRANSLATE].get(self.get('errcode', '')) \
                 or self.get('errmsg', u'没有errmsg')
+            if not self['rawmsg']: self['rawmsg'] = self['errmsg']
     def __nonzero__(self):
         return self.get('errcode', -1) == 0
     def __bool__(self):
@@ -24,6 +26,7 @@ class ReturnValue(dict):
 TRANSLATION = {
     'Chinese': {
         -10001: u'参数中所有非ascii字符串需要用Unicode形式传递，如：u"中文"',
+        -10002: u'文件读取失败，请以"rb"打开文件并作为参数传入',
         -1: u'系统繁忙，此时请开发者稍候再试',
         0: u'请求成功',
         40001: u'获取access_token时AppSecret错误，或者access_token无效。请开发者认真比对AppSecret的正确性，或查看是否正在为恰当的公众号调用接口',

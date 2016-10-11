@@ -2,11 +2,9 @@ import logging, json
 
 from .requests import requests
 from .common import access_token
-from itchatmp.utils import retry
+from itchatmp.utils import retry, encode_send_dict
 from itchatmp.content import SERVER_URL
-from itchatmp.exceptions import ParameterError
 from itchatmp.returnvalues import ReturnValue
-from itchatmp.server import WechatServer
 
 logger = logging.getLogger('itchatmp')
 
@@ -14,11 +12,8 @@ def create(menuDict, autoDecide=True):
     @retry(n=3, waitTime=3)
     @access_token
     def _create(menuDict, accessToken):
-        try:
-            data = json.dumps(menuDict).encode('utf8'). \
-                decode('unicode-escape').encode('utf8')
-        except (UnicodeDecodeError, UnicodeEncodeError):
-            return ReturnValue({'errcode': -10001})
+        data = encode_send_dict(menuDict)
+        if data is None: return ReturnValue({'errcode': -10001})
         r = requests.post('%s/cgi-bin/menu/create?access_token=%s' % (
             SERVER_URL, accessToken), data=data).json()
         return ReturnValue(r)
@@ -47,12 +42,9 @@ def delete(accessToken=None):
 def addconditional(menuDict, autoDecide=True, accessToken=None):
     @retry(n=3, waitTime=3)
     @access_token
-    def _create(menuDict, accessToken):
-        try:
-            data = json.dumps(menuDict).encode('utf8'). \
-                decode('unicode-escape').encode('utf8')
-        except (UnicodeDecodeError, UnicodeEncodeError):
-            return ReturnValue({'errcode': -10001})
+    def _add(menuDict, accessToken):
+        data = encode_send_dict(menuDict)
+        if data is None: return ReturnValue({'errcode': -10001})
         r = requests.post('%s/cgi-bin/menu/addconditional?access_token=%s' % (
             SERVER_URL, accessToken), data=data).json()
         if 'menuid' in r: r['errcode'] = 0
@@ -70,7 +62,7 @@ def addconditional(menuDict, autoDecide=True, accessToken=None):
                     cm.get('matchrule', {}) == currentMenu['matchrule']:
                 logger.debug('exists conditional menu with same content')
                 return ReturnValue({'errcode': 0})
-    return _create(menuDict)
+    return _add(menuDict)
     
 @retry(n=3, waitTime=3)
 @access_token

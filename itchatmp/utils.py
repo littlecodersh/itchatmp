@@ -1,5 +1,4 @@
-import time
-
+import time, json
 import functools, logging
 
 logger = logging.getLogger('itchatmp')
@@ -20,3 +19,10 @@ def retry(n=3, waitTime=3):
                     time.sleep(waitTime)
         return __retry
     return _retry
+
+def encode_send_dict(d):
+    try:
+        return json.dumps(d).encode('utf8'). \
+            decode('unicode-escape').encode('utf8')
+    except (UnicodeDecodeError, UnicodeEncodeError):
+        return
