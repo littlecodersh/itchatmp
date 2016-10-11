@@ -74,14 +74,14 @@ def delete(accountDict, autoDecide=True):
 
 @retry(n=3, waitTime=3)
 @access_token
-def set_headimg(f, kfAccount, accessToken=None):
+def set_head_image(f, kfAccount, accessToken=None):
     try:
         r = requests.post('%s/customservice/kfaccount/uploadheadimg?'
             'access_token=%s&kf_account=%s' % 
-            (accessToken, kfAccount), files={'file': f}).json()
+            (SERVER_URL, accessToken, kfAccount), files={'file': f}).json()
         return ReturnValue(r)
     except:
-        return ReturnValue({'errcode': -10001})
+        return ReturnValue({'errcode': -10001, 'errmsg': e.message})
 
 @retry(n=3, waitTime=3)
 @access_token

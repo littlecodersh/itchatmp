@@ -3,7 +3,8 @@ import functools
 from .server import WechatConfig, WechatServer
 from .models.common import TestStorage
 from .controllers.envtest import env_test
-from .controllers.mpapi import common, menu, customerservice
+from .controllers.mpapi import (common, menu,
+    customerservice, messages)
 
 from .log import logger
 
