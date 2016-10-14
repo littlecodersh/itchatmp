@@ -1,5 +1,5 @@
 import os
-import hashlib, socket, struct
+import hashlib, struct
 from base64 import b64decode, b64encode
 
 try:
@@ -26,29 +26,38 @@ else:
 from itchatmp.content import ENCRYPT
 from itchatmp.views import deconstruct_msg, construct_msg
 
-def oauth(timestamp, nonce, signature, token):
+def oauth(timestamp, nonce, signature, token, echostr=None):
     ''' determine whether signature of request is right
      * both get and post functions need oauth
      * msgs we generate for sending don't match this fn
+     * for Cop mp, we need echostr as well
     '''
-    s = [timestamp, nonce, token]; s.sort()
-    s = ''.join(s).encode('utf8')
+    s = [timestamp, nonce, token]
+    if echostr is not None: s.append(echostr)
+    s.sort(); s = ''.join(s).encode('utf8')
     return hashlib.sha1(s).hexdigest() == signature
 
 def decrypt_msg(timestamp, nonce, signature, config, msgDict):
     ''' decrypt msg from wechat
      * use AES_CBC decryption
      * return a dict contains encrypted information
+     * pass {'echostr': ECHOSTR} into msgDict to decrypt Cop mp oauth
     '''
-    if not msgDict.get('MsgType') == ENCRYPT: return msgDict
+    if 'echostr' in msgDict:
+        msgDict['Encrypt'] = msgDict['echostr']
+    elif not msgDict.get('MsgType') == ENCRYPT:
+        return msgDict
     text = aes_decode(config._encodingAesKey, msgDict['Encrypt'])
     text = text[16:-(text[-1] if isinstance(text[-1], int) else ord(text[-1]))]
-    xmlLen = socket.ntohl(struct.unpack('I', text[:4])[0])
+    xmlLen = struct.unpack('>I', text[:4])[0]
     xmlContent = text[4:xmlLen + 4].decode('utf8')
     fromAppid = text[xmlLen + 4:].decode('utf8')
     if fromAppid != config.appId: return {}
     # Check appId
-    return deconstruct_msg(xmlContent)
+    if 'echostr' in msgDict:
+        return {'echostr': xmlContent}
+    else:
+        return deconstruct_msg(xmlContent)
 
 def encrypt_msg(timestamp, nonce, signature, config, msgDict, replyDict):
     ''' encrypt msg for sending to wechat
@@ -57,7 +66,7 @@ def encrypt_msg(timestamp, nonce, signature, config, msgDict, replyDict):
      * as in construct_msg, string in replyDict should be unicode
     '''
     text = construct_msg(msgDict, replyDict).encode('utf8')
-    text = os.urandom(16) + struct.pack('I', socket.htonl(len(text))) +\
+    text = os.urandom(16) + struct.pack('>I', len(text)) +\
         text + config.appId.encode('utf8')
     paddingAmount = 32 - (len(text) % 32)
     text += chr(paddingAmount).encode('utf8') * paddingAmount

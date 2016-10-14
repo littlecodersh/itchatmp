@@ -108,10 +108,10 @@ def send(msgType, mediaId, additionalDict={}, toUserId=''):
 
 def __form_send_dict(msgType, mediaId, additionalDict):
     if not msgType in (IMAGE, VOICE, VIDEO, TEXT, NEWS, CARD, MUSIC):
-        return ReturnValue({'errcode': 40004,})
+        return ReturnValue({'errcode': 40008,})
     elif msgType == MUSIC:
-        if not ('musicurl' in additionalDict and
-                'hqmusicurl' in additionalDict):
+        if not ('musicurl' in additionalDict and 'hqmusicurl' in additionalDict
+                and 'thumb_media_id' in additionalDict):
             return ReturnValue({'errcode': -10003, 'errmsg': 
                 'additionalDict for type VIDEO should be: ' + 
                 '{"musicurl" :MUSICURL, "hqmusicurl" :HQMUSICURL, ' +

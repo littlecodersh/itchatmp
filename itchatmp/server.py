@@ -3,6 +3,7 @@ from base64 import b64decode
 
 import tornado
 from tornado.web import RequestHandler
+from tornado.wsgi import WSGIAdapter
 from concurrent.futures import ThreadPoolExecutor
 
 from .content import (NORMAL, COMPATIBLE, SAFE,
@@ -13,10 +14,13 @@ from .controllers.oauth import oauth, decrypt_msg, encrypt_msg
 from .exceptions import ParameterError
 
 class WechatConfig(object):
-    def __init__(self, token='', appId='', appSecret='',
+    ''' config storing class
+     * if copId is set, appId will be ignored
+    '''
+    def __init__(self, token='', copId='', appId='', appSecret='',
             encryptMode=NORMAL, encodingAesKey=''):
         self.token = token
-        self.appId, self.appSecret = appId, appSecret
+        self.copId, self.appId, self.appSecret = copId, appId, appSecret
         self.encryptMode = encryptMode
         self.encodingAesKey = encodingAesKey
         try:
@@ -37,7 +41,10 @@ class WechatServer(object):
         self.filterRequest = filterRequest
         self.threadPoolNumber = threadPoolNumber or ((None
             if not hasattr(os, 'cpu_count') else os.cpu_count()) or 1) * 5
-        self.ioLoop = tornado.ioloop.IOLoop.current()
+        try:
+            self.ioLoop = tornado.ioloop.IOLoop.current()
+        except:
+            self.ioLoop = None
         self.isWsgi = True
     @staticmethod
     def instance():
@@ -55,12 +62,19 @@ class WechatServer(object):
         raise NotImplementedError()
     def __construct_get_post_fn(self):
         def get_fn(handler):
-            if self.filterRequest and not self._filter_request(handler):
-                return ''
-            valid = oauth(*([handler.get_argument(key, '') for
-                key in ('timestamp', 'nonce', 'signature')]
-                + [self.config.token]))
-            if valid: return handler.get_argument('echostr', '')
+            if self.filterRequest and not self._filter_request(handler): return ''
+            echostr = handler.get_argument('echostr', '')
+            if handler.get_argument('msg_signature', ''):
+                tns = [handler.get_argument(key, '') for
+                    key in ('timestamp', 'nonce', 'msg_signature')]
+                valid = oauth(*(tns + [echostr, self.config.token]))
+                echostr = decrypt_msg(*(tns + [self.config, {'echostr': echostr}]))
+                echostr = echostr['echostr']
+            else:
+                valid = oauth(*([handler.get_argument(key, '') for
+                    key in ('timestamp', 'nonce', 'signature')]
+                    + [self.config.token]))
+            if valid: return echostr
         def post_fn(handler):
             if self.filterRequest and not self._filter_request(handler):
                 return ''
@@ -126,7 +140,7 @@ class WechatServer(object):
         app = tornado.web.Application(
             [('/', MainHandler)], debug=debug)
         if isWsgi:
-            return tornado.wsgi.WSGIAdapter(app)
+            return WSGIAdapter(app)
         else:
             app.listen(80)
             try:

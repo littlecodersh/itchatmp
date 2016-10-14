@@ -1,5 +1,8 @@
 import time, logging
-import lxml.etree as ET
+try:
+    import lxml.etree as ET
+except ImportError:
+    import xml.etree.ElementTree as ET
 
 from itchatmp.content import VIDEO, MUSIC, NEWS, ENCRYPT
 from itchatmp.exceptions import ParameterError

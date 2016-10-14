@@ -46,7 +46,7 @@ setup(
     # simple. Or you can use find_packages().
     packages=['itchatmp',],
 
-    install_requires=['futures', 'lxml', 'cryptography', 'requests'],
+    install_requires=['futures', 'cryptography', 'requests'], # lxml
 
     # List additional groups of dependencies here
     extras_require={},
