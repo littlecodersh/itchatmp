@@ -106,18 +106,21 @@ def preview(msgType, mediaId, additionalDict={}, toUserId=None, toWxAccount=None
 
 @retry(n=3, waitTime=3)
 @access_token
-def __form_video_id(mediaId, additionalDict):
+def form_video_id(mediaId, additionalDict, accessToken=None):
     ''' in theory video needs another method to get media_id for sending '''
     additionalDict['media_id'] = mediaId
     additionalDict['description'] = additionalDict['introduction']
     try:
+        requests.packages.urllib3.disable_warnings()
         url = 'https://file.api.weixin.qq.com/cgi-bin/media/uploadvideo' \
             '?access_token=%s' % accessToken
-        r = requests.post(url, data=encode_send_dict(additionalDict), verify=False)
+        r = requests.post(url, data=encode_send_dict(additionalDict),
+            verify=False).json()
         # I don't know why this is a fake ssl
+        if 'media_id' in r: r['errcode'] = 0
+        return ReturnValue(r)
     except Exception as e:
         return ReturnValue({'errcode': -10001, 'errmsg': e.message})
-    return ReturnValue(r.json())
 
 def __form_send_dict(msgType, mediaId, additionalDict):
     if not msgType in (IMAGE, VOICE, VIDEO, TEXT, NEWS, CARD):
@@ -127,7 +130,7 @@ def __form_send_dict(msgType, mediaId, additionalDict):
             return ReturnValue({'errcode': -10001, 'errmsg': 
                 'additionalDict for type VIDEO should be: ' + 
                 '{"title" :VIDEO_TITLE, "introduction" :INTRODUCTION}'})
-        mediaId = __form_video_id(mediaId, additionalDict)
+        mediaId = form_video_id(mediaId, additionalDict)['media_id']
         if not mediaId: return mediaId
     return {
         NEWS: {'mpnews':{'media_id': mediaId}, 'msgtype': 'mpnews'},
