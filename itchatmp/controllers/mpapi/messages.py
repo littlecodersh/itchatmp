@@ -126,10 +126,6 @@ def __form_send_dict(msgType, mediaId, additionalDict):
     if not msgType in (IMAGE, VOICE, VIDEO, TEXT, NEWS, CARD):
         return ReturnValue({'errcode': 40004,})
     elif msgType == VIDEO:
-        if not ('title' in additionalDict and 'introduction' in additionalDict):
-            return ReturnValue({'errcode': -10001, 'errmsg': 
-                'additionalDict for type VIDEO should be: ' + 
-                '{"title" :VIDEO_TITLE, "introduction" :INTRODUCTION}'})
         mediaId = form_video_id(mediaId, additionalDict)['media_id']
         if not mediaId: return mediaId
     return {

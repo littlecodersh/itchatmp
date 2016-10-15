@@ -84,6 +84,7 @@ class WechatServer(object):
             if 1: # valid:
                 msgDict = deconstruct_msg(
                     handler.request.body.decode('utf8', 'replace'))
+                isActualEncrypt = 'Encrypt' in msgDict
                 if self.config.encryptMode == SAFE:
                     msgDict = decrypt_msg(*(tns + [self.config, msgDict]))
                 if not msgDict:
@@ -93,7 +94,7 @@ class WechatServer(object):
                 if replyDict is None:
                     return ''
                 elif replyDict.get('MsgType') in OUTCOME_MSG:
-                    if self.config.encryptMode == SAFE:
+                    if self.config.encryptMode == SAFE and isActualEncrypt:
                         return encrypt_msg(*(tns + [self.config, msgDict, replyDict]))
                     else:
                         return construct_msg(msgDict, replyDict)
