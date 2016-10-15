@@ -81,7 +81,7 @@ class WechatServer(object):
             tns = [handler.get_argument(key, '') for
                 key in ('timestamp', 'nonce', 'signature')]
             valid = oauth(*(tns + [self.config.token]))
-            if 1: # valid:
+            if valid:
                 msgDict = deconstruct_msg(
                     handler.request.body.decode('utf8', 'replace'))
                 isActualEncrypt = 'Encrypt' in msgDict

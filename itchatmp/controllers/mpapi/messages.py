@@ -1,4 +1,4 @@
-''' This package is for mass texting in wechatmp
+''' This package is for mass texting in wechat mp
  1. What can we send?
     - IMAGE, VOICE, VIDEO, TEXT, NEWS, CARD
 
