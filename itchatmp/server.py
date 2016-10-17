@@ -1,4 +1,6 @@
 import functools, time, os
+import threading, logging
+import traceback
 from base64 import b64decode
 
 import tornado
@@ -9,9 +11,11 @@ from concurrent.futures import ThreadPoolExecutor
 from .content import (NORMAL, COMPATIBLE, SAFE,
     INCOME_MSG, OUTCOME_MSG,
     SERVER_WAIT_TIME)
-from .views import construct_msg, deconstruct_msg
+from .views import deconstruct_msg, construct_xml_msg, reply_msg_format
 from .controllers.oauth import oauth, decrypt_msg, encrypt_msg
 from .exceptions import ParameterError
+
+logger = logging.getLogger('itchatmp')
 
 class WechatConfig(object):
     ''' config storing class
@@ -32,6 +36,10 @@ class WechatConfig(object):
         return True
 
 class WechatServer(object):
+    ''' Wechat server class
+     * _cssend and _filter_request will be automatically added when model loaded
+     * is a singleton
+    '''
     __replyFnDict = {}
     def __init__(self, config, atStorage, userStorage,
             filterRequest=False, threadPoolNumber=None):
@@ -46,6 +54,7 @@ class WechatServer(object):
         except:
             self.ioLoop = None
         self.isWsgi = True
+        self.debug = True
     @staticmethod
     def instance():
         ''' singleton
@@ -77,39 +86,68 @@ class WechatServer(object):
             if valid: return echostr
         def post_fn(handler):
             if self.filterRequest and not self._filter_request(handler):
-                return ''
+                logger.debug('A request from unknown ip is filtered'); return None, None
             tns = [handler.get_argument(key, '') for
                 key in ('timestamp', 'nonce', 'signature')]
             valid = oauth(*(tns + [self.config.token]))
             if valid:
-                msgDict = deconstruct_msg(
-                    handler.request.body.decode('utf8', 'replace'))
+                msgDict = deconstruct_msg(handler.request.body.decode('utf8', 'replace'))
                 isActualEncrypt = 'Encrypt' in msgDict
                 if self.config.encryptMode == SAFE:
                     msgDict = decrypt_msg(*(tns + [self.config, msgDict]))
                 if not msgDict:
-                    return ''
+                    logger.debug('Ignore a request because decrypt failed')
                 else:
-                    replyDict = self.__get_reply_fn(msgDict['MsgType'])(msgDict)
-                if replyDict is None:
-                    return ''
-                elif replyDict.get('MsgType') in OUTCOME_MSG:
-                    if self.config.encryptMode == SAFE and isActualEncrypt:
-                        return encrypt_msg(*(tns + [self.config, msgDict, replyDict]))
-                    else:
-                        return construct_msg(msgDict, replyDict)
-                else:
-                    raise ParameterError(
-                        'Unknown reply message type "%s"' % replyDict.get('MsgType'))
+                    newMsgDict = {}
+                    for k, v in msgDict.items(): newMsgDict[k[0].lower() + k[1:]] = v
+                    try:
+                        reply = self.__get_reply_fn(msgDict['MsgType'])(newMsgDict)
+                    except Exception as e:
+                        logger.debug(e.message)
+                        if self.debug: traceback.print_exc()
+                    if reply:
+                        reply = reply_msg_format(reply)
+                        if reply:
+                            if reply.get('msgType') in OUTCOME_MSG:
+                                reply['toUserName'] = msgDict['FromUserName']
+                                reply['fromUserName'] = msgDict['ToUserName']
+                                if self.config.encryptMode == SAFE and isActualEncrypt:
+                                    return encrypt_msg(*(tns +
+                                        [self.config, reply])), reply
+                                else:
+                                    return construct_xml_msg(reply), reply
+                            else:
+                                logger.debug('Reply is invalid: unknown msgType')
+                        else:
+                            logger.debug('Reply is invalid: %s' % reply.get('errmsg'))
+            else:
+                logger.debug('Ignore a request because of signature')
+            return None, None
         return get_fn, post_fn
     def __construct_handler(self, isWsgi):
         get_fn, post_fn = self.__construct_get_post_fn()
+        cssend = self._cssend
         if isWsgi:
+            def _timer_thread(handler):
+                time.sleep(SERVER_WAIT_TIME)
+                if not closed: handler.finish()
             class MainHandler(RequestHandler):
                 def get(self):
                     self.finish(get_fn(self))
                 def post(self):
-                    self.finish(post_fn(self))
+                    closed = False
+                    timeThread = threading.Thread(target=_timer_thread, args=(self,))
+                    timeThread.setDaemon = True
+                    timeThread.start()
+                    r, rawReply = post_fn(self)
+                    if closed:
+                        if rawReply:
+                            r = cssend(rawReply, rawReply.get('toUserName', ''))
+                            if not r:
+                                logger.debug('Reply error: %s' % r.get('errmsg', ''))
+                    else:
+                        closed = True
+                        self.finish(r)
         else:
             threadPool = ThreadPoolExecutor(self.threadPoolNumber)
             ioLoop = self.ioLoop
@@ -118,15 +156,17 @@ class WechatServer(object):
                     self.finish(get_fn(self))
                 @tornado.gen.coroutine
                 def post(self):
-                    # WeChat server will close the connection in 5s
                     timeoutHandler = ioLoop.call_later(SERVER_WAIT_TIME,
-                        lambda x: self.finish())
-                    r = yield threadPool.submit(post_fn, self)
+                        lambda: self.finish())
+                    r, rawReply = yield threadPool.submit(post_fn, self)
                     ioLoop.remove_timeout(timeoutHandler)
                     if time.time() < timeoutHandler.deadline:
                         self.finish(r)
                     else:
-                        pass
+                        if rawReply:
+                            r = cssend(rawReply, rawReply.get('toUserName', ''))
+                            if not r:
+                                logger.debug('Reply error: %s' % r.get('errmsg', ''))
         return MainHandler
     def update_config(self, config=None, atStorage=None, userStorage=None,
             filterRequest=None, threadPoolNumber=None):
@@ -137,6 +177,7 @@ class WechatServer(object):
         self.threadPoolNumber = threadPoolNumber or self.threadPoolNumber
     def run(self, isWsgi=False, debug=True):
         self.isWsgi = isWsgi
+        self.debug = debug
         MainHandler = self.__construct_handler(isWsgi)
         app = tornado.web.Application(
             [('/', MainHandler)], debug=debug)
@@ -149,12 +190,18 @@ class WechatServer(object):
             except:
                 self.ioLoop.stop()
     def msg_register(self, msgType):
+        ''' decorator to register message handlers
+         * msgType can be type like TEXT or a list of them
+         * register twice will override the older one
+        '''
         def _msg_register(fn):
-            if msgType in INCOME_MSG:
-                self.__replyFnDict[msgType] = fn
-            else:
-                raise ParameterError(
-                    'Known type register "%s"' % msgType)
+            msgTypeList = msgType if isinstance(msgType, list) else [msgType]
+            for t in msgTypeList:
+                if t in INCOME_MSG:
+                    self.__replyFnDict[t] = fn
+                else:
+                    raise ParameterError(
+                        'Known type register "%s"' % t)
             return fn
         return _msg_register
     def __get_reply_fn(self, msgType):

@@ -24,7 +24,7 @@ else:
         return cryptor.decrypt(b64decode(data))
 
 from itchatmp.content import ENCRYPT
-from itchatmp.views import deconstruct_msg, construct_msg
+from itchatmp.views import deconstruct_msg, construct_xml_msg
 
 def oauth(timestamp, nonce, signature, token, echostr=None):
     ''' determine whether signature of request is right
@@ -59,13 +59,13 @@ def decrypt_msg(timestamp, nonce, signature, config, msgDict):
     else:
         return deconstruct_msg(xmlContent)
 
-def encrypt_msg(timestamp, nonce, signature, config, msgDict, replyDict):
+def encrypt_msg(timestamp, nonce, signature, config, replyDict):
     ''' encrypt msg for sending to wechat
      * use AES_CBC encryption
      * return a string ready for sending
-     * as in construct_msg, string in replyDict should be unicode
+     * as in construct_xml_msg, string in replyDict should be unicode
     '''
-    text = construct_msg(msgDict, replyDict).encode('utf8')
+    text = construct_xml_msg(replyDict).encode('utf8')
     text = os.urandom(16) + struct.pack('>I', len(text)) +\
         text + config.appId.encode('utf8')
     paddingAmount = 32 - (len(text) % 32)
@@ -75,11 +75,12 @@ def encrypt_msg(timestamp, nonce, signature, config, msgDict, replyDict):
     s = [i.encode('utf8') for i in (timestamp, nonce, config.token)]
     s += [text]; s.sort(); s = b''.join(s)
     # Signature generated
-    return construct_msg(msgDict,
-        {
-            'MsgType': ENCRYPT,
-            'Encrypt': text.decode('utf8'),
-            'MsgSignature': hashlib.sha1(s).hexdigest(),
-            'TimeStamp': timestamp,
-            'Nonce': nonce,
+    return construct_xml_msg({
+            'fromUserName': replyDict['FromUserName'],
+            'toUserName': replyDict['ToUserName'],
+            'msgType': ENCRYPT,
+            'encrypt': text.decode('utf8'),
+            'msgSignature': hashlib.sha1(s).hexdigest(),
+            'timeStamp': timestamp,
+            'nonce': nonce,
         }, )

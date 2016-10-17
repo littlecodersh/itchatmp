@@ -35,6 +35,7 @@ def maintain_access_token(firstCallResult=None):
 def update_access_token():
     ''' function to update access token
      * auto-maintain begins when this function is called for the first time
+       - of course, if isWsgi or haven't started, auto-maintain will not start
      * If auto-maintain failed, it will restart tomorrow 0004h:30
      * will return ReturnValue object (equals to True) if success
      * will return ReturnValue object (equals to False) if fail
@@ -52,7 +53,7 @@ def update_access_token():
     else:
         r = ReturnValue(r)
         logger.debug('Failed to get token: %s' %r)
-    if not __AUTO_MAINTAIN:
+    if not __AUTO_MAINTAIN and not __server.isWsgi:
         __AUTO_MAINTAIN = True
         maintain_access_token(firstCallResult=r)
     return r
@@ -61,6 +62,7 @@ def access_token(fn):
     ''' wrapper for functions need accessToken
      * accessToken should be a key argument of the wrapped fn
        ..code:: python
+            @access_token
             def fn(a, b, c, accessToken=False):
                 pass
      * if accessToken is not successfully fetched, wrapped fn will return why
@@ -73,7 +75,14 @@ def access_token(fn):
             if not updateResult: return updateResult
             accessToken, expireTime = __server.atStorage.get_access_token()
         kwargs['accessToken'] = accessToken
-        return fn(*args, **kwargs)
+        r = fn(*args, **kwargs)
+        if isinstance(r, ReturnValue) and r.get('errcode') == 40014: # token timeout
+            updateResult = update_access_token()
+            if not updateResult: return updateResult
+            accessToken, expireTime = __server.atStorage.get_access_token()
+            kwargs['accessToken'] = accessToken
+            r = fn(*args, **kwargs)
+        return r
     return _access_token
 
 @access_token
