@@ -31,7 +31,10 @@ class WechatConfig(object):
             self._encodingAesKey = b64decode(
                 self.encodingAesKey.encode('utf8') + b'=')
         except:
-            raise ParameterError('Wrong AES Key format')
+            if self.encryptMode == SAFE:
+                raise ParameterError('Wrong AES Key format')
+            else:
+                self._encodingAesKey = ''
     def verify(self):
         return True
 
@@ -105,7 +108,7 @@ class WechatServer(object):
                     except Exception as e:
                         logger.debug(e.message)
                         if self.debug: traceback.print_exc()
-                    if reply:
+                    else:
                         reply = reply_msg_format(reply)
                         if reply:
                             if reply.get('msgType') in OUTCOME_MSG:
