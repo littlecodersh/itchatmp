@@ -1,15 +1,18 @@
 from .common import determine_wrapper as dwp
 from .mp import menu as mpMenu
+from .qy import menu as qyMenu
 
-def create(menuDict, autoDecide=True):
-    return dwp(mpMenu.create, None,
-        menuDict, autoDecide)
+def create(menuDict, autoDecide=True, agentId=None):
+    return dwp(mpMenu.create, qyMenu.create,
+        menuDict, autoDecide, agentId)
 
-def get():
-    return dwp(mpMenu.get, None)
+def get(agentId=None):
+    return dwp(mpMenu.get, qyMenu.get,
+        agentId)
 
-def delete():
-    return dwp(mpMenu.delete, None)
+def delete(agentId=None):
+    return dwp(mpMenu.delete, qyMenu.delete,
+        agentId)
 
 def addconditional(menuDict, autoDecide=True):
     return dwp(mpMenu.addconditional, None,

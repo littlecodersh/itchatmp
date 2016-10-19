@@ -52,8 +52,8 @@ def decrypt_msg(timestamp, nonce, signature, config, msgDict):
     xmlLen = struct.unpack('>I', text[:4])[0]
     xmlContent = text[4:xmlLen + 4].decode('utf8')
     fromAppid = text[xmlLen + 4:].decode('utf8')
-    if fromAppid != config.appId: return {}
     # Check appId
+    if fromAppid not in (config.appId, config.copId): return {}
     if 'echostr' in msgDict:
         return {'echostr': xmlContent}
     else:

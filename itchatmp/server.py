@@ -74,27 +74,35 @@ class WechatServer(object):
         raise NotImplementedError()
     def __construct_get_post_fn(self):
         def get_fn(handler):
-            if self.filterRequest and not self._filter_request(handler): return ''
+            if self.filterRequest and not self._filter_request(handler.request): return ''
+            print(handler.get_argument('code', 'code'))
+            print(handler.get_argument('state', 'state'))
             echostr = handler.get_argument('echostr', '')
             if handler.get_argument('msg_signature', ''):
                 tns = [handler.get_argument(key, '') for
                     key in ('timestamp', 'nonce', 'msg_signature')]
                 valid = oauth(*(tns + [echostr, self.config.token]))
                 echostr = decrypt_msg(*(tns + [self.config, {'echostr': echostr}]))
-                echostr = echostr['echostr']
+                echostr = echostr.get('echostr')
             else:
                 valid = oauth(*([handler.get_argument(key, '') for
                     key in ('timestamp', 'nonce', 'signature')]
                     + [self.config.token]))
             if valid: return echostr
         def post_fn(handler):
-            if self.filterRequest and not self._filter_request(handler):
+            if self.filterRequest and not self._filter_request(handler.request):
                 logger.debug('A request from unknown ip is filtered'); return None, None
-            tns = [handler.get_argument(key, '') for
-                key in ('timestamp', 'nonce', 'signature')]
-            valid = oauth(*(tns + [self.config.token]))
+            msgDict = deconstruct_msg(handler.request.body.decode('utf8', 'replace'))
+            if handler.get_argument('msg_signature', ''):
+                tns = [handler.get_argument(key, '') for
+                    key in ('timestamp', 'nonce', 'msg_signature')]
+                valid = oauth(*(tns +
+                    [self.config.token, msgDict.get('Encrypt', '')]))
+            else:
+                tns = [handler.get_argument(key, '') for
+                    key in ('timestamp', 'nonce', 'signature')]
+                valid = oauth(*(tns + [self.config.token]))
             if valid:
-                msgDict = deconstruct_msg(handler.request.body.decode('utf8', 'replace'))
                 isActualEncrypt = 'Encrypt' in msgDict
                 if self.config.encryptMode == SAFE:
                     msgDict = decrypt_msg(*(tns + [self.config, msgDict]))

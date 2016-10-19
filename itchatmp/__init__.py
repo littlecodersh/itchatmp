@@ -4,7 +4,8 @@ from .server import WechatConfig, WechatServer
 from .models.common import TestStorage
 from .controllers.envtest import env_test
 from .controllers.mpapi import (common, menu,
-    customerservice, messages, users, utils, statistics)
+    customerservice, messages, users, utils, statistics,
+    oauth2)
 from .controllers.mpapi.wrapped import send
 
 from .log import logger

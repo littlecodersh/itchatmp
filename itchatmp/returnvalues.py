@@ -5,7 +5,7 @@ TRANSLATE = 'Chinese'
 TRANSLATION = {}
 
 class ReturnValue(dict):
-    def __init__(self, returnValueDict):
+    def __init__(self, returnValueDict={}):
         for k, v in returnValueDict.items(): self[k] = v
         if TRANSLATE:
             self['rawmsg'] = self.get('errmsg', '')

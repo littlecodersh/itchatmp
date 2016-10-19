@@ -36,7 +36,10 @@ logger = logging.getLogger('itchatmp')
 
 @retry(n=3, waitTime=3)
 @access_token
-def create_tag(name, accessToken=None):
+def create_tag(name, id=None, accessToken=None):
+    ''' create_tag
+     * id is for qy only
+    '''
     data = encode_send_dict({'tag': {'name': name}})
     if data is None: return ReturnValue({'errcode': -10001})
     r = requests.post('%s/cgi-bin/tags/create?access_token=%s'
@@ -82,7 +85,8 @@ def get_users_of_tag(id, nextOpenId='', accessToken=None):
 
 @retry(n=3, waitTime=3)
 @access_token
-def add_users_into_tag(id, userIdList, accessToken=None):
+def add_users_into_tag(id, userIdList=None, partyList=None, accessToken=None):
+    if not userIdList: return ReturnValue({'errcode': 40035, 'errmsg': 'must have one userId'})
     data = encode_send_dict({'openid_list': userIdList, 'tagid': id})
     if data is None: return ReturnValue({'errcode': -10001})
     r = requests.post('%s/cgi-bin/tags/members/batchtagging?access_token=%s'
@@ -91,7 +95,8 @@ def add_users_into_tag(id, userIdList, accessToken=None):
 
 @retry(n=3, waitTime=3)
 @access_token
-def delete_users_of_tag(id, userIdList, accessToken=None):
+def delete_users_of_tag(id, userIdList=None, partyList=None, accessToken=None):
+    if not userIdList: return ReturnValue({'errcode': 40035, 'errmsg': 'must have one userId'})
     data = encode_send_dict({'tagid': id, 'openid_list': userIdList})
     if data is None: return ReturnValue({'errcode': -10001})
     r = requests.post('%s/cgi-bin/tags/members/batchuntagging?access_token=%s'
@@ -119,6 +124,9 @@ def set_alias(userId, alias, accessToken=None):
     return ReturnValue(r)
 
 def get_user_info(userId):
+    ''' get info of a user or a list of users
+     * userId can be a list or only one userId
+    '''
     @retry(n=3, waitTime=3)
     @access_token
     def _batch_get_user_info(userId, accessToken=None):
@@ -146,7 +154,10 @@ def get_user_info(userId):
 
 @retry(n=3, waitTime=3)
 @access_token
-def get_users(nextOpenId='', accessToken=None):
+def get_users(nextOpenId='', departmentId=None, fetchChild=False, status=4, accessToken=None):
+    ''' get users from nextOpenId
+     * departmentId, fetchChild, status is for qy api
+    '''
     params = {
         'access_token': accessToken,
         'next_openid': nextOpenId, }

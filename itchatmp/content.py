@@ -1,4 +1,5 @@
 SERVER_URL = 'https://api.weixin.qq.com'
+COMPANY_URL = 'https://qyapi.weixin.qq.com'
 
 NORMAL, COMPATIBLE, SAFE = 0, 1, 2
 
