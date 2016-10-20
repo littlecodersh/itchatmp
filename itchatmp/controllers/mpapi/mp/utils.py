@@ -10,8 +10,8 @@ logger = logging.getLogger('itchatmp')
 
 def create_qrcode(sceneData, expire=2592000):
     ''' create qrcode with specific data
-     * qrcode can be perment, if so you need to set expire to False
-     * sceneData can be string or integer if it's perment
+     * qrcode can be permanent, if so you need to set expire to False
+     * sceneData can be string or integer if it's permanent
      * but it can only be integer if it's not
     '''
     data = {'action_info': {'scene': {}}}

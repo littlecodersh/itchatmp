@@ -88,7 +88,6 @@ def create_user(userId, name, departmentIdList,
         userId, name, departmentIdList, position,
         mobile, gender, email, weixinId, headImgId, extAttr)
 
-
 def update_user(userId, name=None, departmentIdList=None,
         position=None, mobile=None, gender=None, email=None,
         weixinId=None, headImgId=None, extAttr=None):
@@ -99,3 +98,11 @@ def update_user(userId, name=None, departmentIdList=None,
 def delete_users(userId):
     return dwp(None, qyUsers.delete_users,
         userId)
+
+def upload_contract(csvMediaId, callbackUrl, method='sync'):
+    return dwp(None, qyUsers.upload_contract,
+        csvMediaId, callbackUrl, method)
+
+def get_result(jobId):
+    return dwp(None, qyUsers.get_result,
+        jobId)

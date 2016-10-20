@@ -14,6 +14,7 @@ MUSIC = 'music'
 NEWS = 'news'
 CARD = 'card'
 THUMB = 'thumb'
+FILE = 'file'
 TRANSFER = 'transfer_customer_service'
 class _EVENT(object):
     SUBSCRIBE = 'subscribe'

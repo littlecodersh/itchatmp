@@ -2,11 +2,13 @@ import logging
 
 from ..requests import requests
 from .common import access_token
-from itchatmp.utils import retry, encode_send_dict
 from itchatmp.content import (COMPANY_URL,
     IMAGE, VOICE, VIDEO, MUSIC, TEXT, NEWS, CARD)
+from itchatmp.server import WechatServer
+from itchatmp.utils import retry, encode_send_dict
 from itchatmp.returnvalues import ReturnValue
 
+__server = WechatServer.instance()
 logger = logging.getLogger('itchatmp')
 
 @retry(n=3, waitTime=3)
@@ -262,4 +264,37 @@ def delete_users_of_tag(id, userIdList=None, partyList=None, accessToken=None):
     r = requests.post('%s/cgi-bin/tag/deltagusers?access_token=%s'
         % (COMPANY_URL, accessToken), data=data).json()
     if 'invalidlist' in r or 'invalidparty' in r: r['errcode'] = 40070
+    return ReturnValue(r)
+
+def upload_contract(csvMediaId, callbackUrl, method='sync'):
+    ''' update users with uploaded csv
+     * method can be syncuser, replaceuser, replaceparty
+    '''
+    if method not in ('syncuser', 'replaceuser', 'replaceparty'):
+        return ReturnValue({'errcode': -10003, 'errmsg': 
+            'method should be syncuser, replaceuser, replaceparty'})
+    data = {'media_id': csvMediaId,
+        'callback': {
+            'url': callbackUrl,
+            'token': __server.config.token,
+            'encodingaeskey': __server.config.encodingAesKey, }}
+    data = encode_send_dict(data)
+    if data is None: return ReturnValue({'errcode': -10001})
+    @retry(n=3, waitTime=3)
+    @access_token
+    def upload(method, accessToken=None):
+        url = '%s/cgi-bin/batch/%s?access_token=%s' % \
+            (COMPANY_URL, method, accessToken)
+        r = requests.post(url, data=data).json()
+        return ReturnValue(r)
+    return upload(method)
+
+@retry(n=3, waitTime=3)
+@access_token
+def get_result(jobId, accessToken=None):
+    params = {
+        'access_token': accessToken,
+        'jobid': jobId, }
+    r = requests.get('%s/cgi-bin/batch/getresult' % COMPANY_URL,
+        params=params).json()
     return ReturnValue(r)
