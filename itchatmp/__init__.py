@@ -10,7 +10,7 @@ from .controllers.mpapi.wrapped import send
 
 from .log import logger
 
-__version__ = '0.0.2'
+__version__ = '0.0.3'
 
 # env_test()
 

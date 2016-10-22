@@ -88,7 +88,7 @@ def construct_xml_msg(replyDict):
         return ''
     def _fill_key(d, k):
         d[k] = d.get(k, '')
-    for k, v in replyDict.items():
+    for k, v in list(replyDict.items()):
         if hasattr(k, 'capitalize'):
             replyDict[k.capitalize()[0] + k[1:]] = v
     if replyDict['MsgType'] == VIDEO:
