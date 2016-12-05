@@ -2,15 +2,15 @@ from itchatmp.server import WechatServer
 from .mp import common as mpCommon
 from .qy import common as qyCommon
 
-__server = WechatServer.instance()
+server = WechatServer(None, None, None)
 
 def determine_wrapper(mpFn=None, copFn=None, *args, **kwargs):
-    if __server.config.copId != '':
+    if server.config.copId != '':
         if copFn is None:
             raise AttributeError('No such method for company platform')
         else:
             return copFn(*args, **kwargs)
-    elif __server.config.appId != '':
+    elif server.config.appId != '':
         if mpFn is None:
             raise AttributeError('No such method for massive platform')
         else:
@@ -36,4 +36,5 @@ def filter_request(request):
         qyCommon.filter_request,
         request)
 
-__server._filter_request = filter_request
+server.filter_request = filter_request
+server.access_token = access_token

@@ -4,7 +4,7 @@ from itchatmp.server import WechatServer
 
 logger = logging.getLogger('itchatmp')
 
-__server = WechatServer.instance()
+__server = WechatServer(None, None, None)
 
 class AccessTokenStorage(object):
     def get_access_token(self):

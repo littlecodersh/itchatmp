@@ -8,7 +8,7 @@ from itchatmp.server import WechatServer
 from itchatmp.utils import retry, encode_send_dict
 from itchatmp.returnvalues import ReturnValue
 
-__server = WechatServer.instance()
+__server = WechatServer(None, None, None)
 logger = logging.getLogger('itchatmp')
 
 @retry(n=3, waitTime=3)

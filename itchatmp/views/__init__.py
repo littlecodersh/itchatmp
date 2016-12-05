@@ -1,4 +1,5 @@
 import time, logging, re
+import traceback
 try:
     import lxml.etree as ET
 except ImportError:
@@ -56,15 +57,15 @@ def reply_msg_format(msg):
         else:
             msgType = {'img': IMAGE, 'voc': VOICE, 'vid': VIDEO, 'txt': TEXT,
                 'nws': NEWS, 'cad': CARD}[msgType[1:4]]
-        r = {'msgType': msgType, 'mediaId': content}
+        r = {'MsgType': msgType, 'MediaId': content}
     else:
         r = ReturnValue({'errcode': -10003, 'errmsg': 
             'msg should be string or dict'})
-    if r and r.get('msgType') == TEXT:
-        if 'mediaId' not in r and 'content' in r:
-            r['mediaId'] = r['content']
-        elif 'mediaId' in r and 'content' not in r:
-            r['content'] = r['mediaId']
+    if r and r.get('MsgType') == TEXT:
+        if 'MediaId' not in r and 'Content' in r:
+            r['MediaId'] = r['Content']
+        elif 'MediaId' in r and 'Content' not in r:
+            r['Content'] = r['MediaId']
     return r
 
 def construct_xml_msg(replyDict):
@@ -73,9 +74,9 @@ def construct_xml_msg(replyDict):
     '''
     def _render(template, replyDict):
         try:
-            return template.format(
-                CreateTime=int(time.time()),
-                **replyDict)
+            if 'CreateTime' not in replyDict:
+                replyDict['CreateTime'] = int(time.time())
+            return template.format(**replyDict)
         except KeyError as e:
             logger.debug('Missing message element "%s"' % e.message)
         except UnicodeDecodeError as e:
@@ -83,14 +84,10 @@ def construct_xml_msg(replyDict):
         except:
             logger.debug(
                 'Wrong format of reply message: ' + str(replyDict))
-            import traceback
-            traceback.print_exc()
+            logger.debug(traceback.format_exc())
         return ''
     def _fill_key(d, k):
         d[k] = d.get(k, '')
-    for k, v in list(replyDict.items()):
-        if hasattr(k, 'capitalize'):
-            replyDict[k.capitalize()[0] + k[1:]] = v
     if replyDict['MsgType'] == VIDEO:
         for k in ('Title', 'Description'):
             _fill_key(replyDict, k)

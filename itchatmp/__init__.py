@@ -1,21 +1,18 @@
-import functools
-
 from .server import WechatConfig, WechatServer
 from .models.common import TestStorage
 from .controllers.envtest import env_test
 from .controllers.mpapi import (common, menu,
     customerservice, messages, users, utils, statistics,
     oauth2)
-from .controllers.mpapi.wrapped import send
 
-from .log import logger
+from .log import set_logging
 
-__version__ = '0.0.3'
+__version__ = '0.0.4'
 
-# env_test()
+server = WechatServer(None, None, None)
 
-__server = WechatServer.instance()
-
-update_config = __server.update_config
-run = __server.run
-msg_register = __server.msg_register
+update_config = server.update_config
+run           = server.run
+msg_register  = server.msg_register
+send          = server.send
+set_logging   = set_logging

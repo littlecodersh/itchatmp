@@ -10,7 +10,7 @@ __all__ = ['update_access_token_producer', 'access_token', 'filter_request']
 
 logger = logging.getLogger('itchatmp')
 
-__server = WechatServer.instance()
+__server = WechatServer(None, None, None)
 __AUTO_MAINTAIN = False
 __serverList = None
 

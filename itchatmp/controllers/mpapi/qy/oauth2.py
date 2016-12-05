@@ -10,7 +10,7 @@ from itchatmp.utils import retry, encode_send_dict
 from ..requests import requests
 from .common import access_token
 
-__server = WechatServer.instance()
+__server = WechatServer(None, None, None)
 
 def generate_code_url(redirectUri, state=None):
     ''' generate redirect url for visiting with code
