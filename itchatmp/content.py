@@ -1,6 +1,3 @@
-SERVER_URL = 'https://api.weixin.qq.com'
-COMPANY_URL = 'https://qyapi.weixin.qq.com'
-
 NORMAL, COMPATIBLE, SAFE = 0, 1, 2
 
 TEXT = 'text'
@@ -32,5 +29,3 @@ INCOME_MSG = (TEXT, IMAGE, VOICE, VIDEO, SHORT_VIDEO, LOCATION,
     EVENT.CLICK, EVENT.VIEW)
 
 OUTCOME_MSG = (TEXT, IMAGE, VOICE, VIDEO, MUSIC, NEWS, CARD)
-
-SERVER_WAIT_TIME = 4.5

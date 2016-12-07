@@ -1,4 +1,4 @@
-from itchatmp.content import SERVER_URL
+from itchatmp.config import SERVER_URL
 from itchatmp.returnvalues import ReturnValue
 from itchatmp.utils import retry
 from ..base.common import (update_access_token_producer,

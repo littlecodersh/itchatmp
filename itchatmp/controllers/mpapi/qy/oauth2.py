@@ -3,7 +3,7 @@ try:
 except ImportError:
     from urllib.parse import quote_plus as quote
 import time
-from itchatmp.content import COMPANY_URL
+from itchatmp.config import COMPANY_URL
 from itchatmp.returnvalues import ReturnValue
 from itchatmp.server import WechatServer
 from itchatmp.utils import retry, encode_send_dict

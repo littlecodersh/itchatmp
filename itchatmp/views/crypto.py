@@ -1,4 +1,4 @@
-import os
+import os, logging, traceback
 import hashlib, struct
 from base64 import b64decode, b64encode
 
@@ -26,11 +26,13 @@ else:
 from itchatmp.content import ENCRYPT
 from itchatmp.views import deconstruct_msg, construct_xml_msg
 
+logger = logging.getLogger('itchatmp')
+
 def decrypt_msg(timestamp, nonce, signature, config, msgDict):
-    ''' decrypt msg from wechat
-     * use AES_CBC decryption
-     * return a dict contains encrypted information
-     * pass {'echostr': ECHOSTR} into msgDict to decrypt Cop mp oauth
+    ''' decrypt msg from wechat, use AES_CBC decryption
+        return a dict contains encrypted information
+        if decrypt failed, will return an empty dict
+        pass {'echostr': ECHOSTR} into msgDict to decrypt Cop mp oauth
     '''
     if 'echostr' in msgDict:
         msgDict['Encrypt'] = msgDict['echostr']
@@ -43,9 +45,12 @@ def decrypt_msg(timestamp, nonce, signature, config, msgDict):
         xmlContent = text[4:xmlLen + 4].decode('utf8')
         fromAppid = text[xmlLen + 4:].decode('utf8')
     except:
+        logger.debug(traceback.format_exc())
         return {}
     # Check appId
-    if fromAppid not in (config.appId, config.copId): return {}
+    if fromAppid not in (config.appId, config.copId):
+        logger.debug('A message from wrong appid is filtered when decrypt: %s' % fromAppid)
+        return {}
     if 'echostr' in msgDict:
         return {'echostr': xmlContent}
     else:
@@ -68,11 +73,11 @@ def encrypt_msg(timestamp, nonce, signature, config, replyDict):
     s += [text]; s.sort(); s = b''.join(s)
     # Signature generated
     return construct_xml_msg({
-            'fromUserName': replyDict['FromUserName'],
-            'toUserName': replyDict['ToUserName'],
-            'msgType': ENCRYPT,
-            'encrypt': text.decode('utf8'),
-            'msgSignature': hashlib.sha1(s).hexdigest(),
-            'timeStamp': timestamp,
-            'nonce': nonce,
+            'FromUserName': replyDict['FromUserName'],
+            'ToUserName': replyDict['ToUserName'],
+            'MsgType': ENCRYPT,
+            'Encrypt': text.decode('utf8'),
+            'MsgSignature': hashlib.sha1(s).hexdigest(),
+            'TimeStamp': timestamp,
+            'Nonce': nonce,
         }, )

@@ -42,7 +42,8 @@ import logging, json
 from ..requests import requests
 from .common import access_token
 from itchatmp.utils import retry, encode_send_dict
-from itchatmp.content import (SERVER_URL,
+from itchatmp.config import SERVER_URL,
+from itchatmp.content import (
     IMAGE, VOICE, VIDEO, THUMB, TEXT, NEWS, CARD)
 from itchatmp.returnvalues import ReturnValue
 

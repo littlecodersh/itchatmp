@@ -68,7 +68,7 @@ def reply_msg_format(msg):
             r['Content'] = r['MediaId']
     return r
 
-def construct_xml_msg(replyDict):
+def construct_msg(replyDict):
     ''' construct xml msg from dict to string
      * if deconstruct failed will return an empty string
     '''

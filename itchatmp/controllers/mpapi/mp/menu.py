@@ -2,7 +2,7 @@ import logging, json
 
 from ..requests import requests
 from itchatmp.utils import retry, encode_send_dict
-from itchatmp.content import SERVER_URL
+from itchatmp.config import SERVER_URL
 from itchatmp.returnvalues import ReturnValue
 from .common import access_token
 from ..base.menu import create_producer, get_producer, delete_producer

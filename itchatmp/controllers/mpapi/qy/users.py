@@ -2,7 +2,8 @@ import logging
 
 from ..requests import requests
 from .common import access_token
-from itchatmp.content import (COMPANY_URL,
+from itchatmp.config import COMPANY_URL
+from itchatmp.content import (
     IMAGE, VOICE, VIDEO, MUSIC, TEXT, NEWS, CARD)
 from itchatmp.server import WechatServer
 from itchatmp.utils import retry, encode_send_dict

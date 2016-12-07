@@ -3,7 +3,7 @@ import logging
 from ..requests import requests
 from .common import access_token
 from itchatmp.utils import retry, encode_send_dict
-from itchatmp.content import COMPANY_URL
+from itchatmp.config import COMPANY_URL
 from itchatmp.returnvalues import ReturnValue
 
 logger = logging.getLogger('itchatmp')
