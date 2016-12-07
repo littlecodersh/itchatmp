@@ -1,6 +1,6 @@
 from .common import determine_wrapper
-from .mp import messages as mpMsg
-from .qy import messages as qyMsg
+from .mpapi.mp import messages as mpMsg
+from .mpapi.qy import messages as qyMsg
 
 def send_some(msgType, mediaId, additionalDict={},
         targetIdList=[], partyIdList=[], tagIdList=[],

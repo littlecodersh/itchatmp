@@ -1,6 +1,6 @@
 from .common import determine_wrapper as dwp
-from .mp import users as mpUsers
-from .qy import users as qyUsers
+from .mpapi.mp import users as mpUsers
+from .mpapi.qy import users as qyUsers
 
 def create_tag(name, id=None):
     return dwp(mpUsers.create_tag, qyUsers.create_tag,

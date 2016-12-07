@@ -1,5 +1,5 @@
 from .common import determine_wrapper as dwp
-from .mp import customerservice as mpCs
+from .mpapi.mp import customerservice as mpCs
 
 def get():
     return dwp(mpCs.get, None)

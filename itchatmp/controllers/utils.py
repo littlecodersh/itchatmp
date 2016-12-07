@@ -1,5 +1,5 @@
 from .common import determine_wrapper as dwp
-from .mp import utils as mpUtils
+from .mpapi.mp import utils as mpUtils
 
 def create_qrcode(sceneData, expire=2592000):
     return dwp(mpUtils.create_qrcode, None,

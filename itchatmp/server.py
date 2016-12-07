@@ -3,9 +3,10 @@ from base64 import b64decode
 
 import tornado
 
-from itchatmp.content import NORMAL
+from .content import NORMAL
 from .components import load_register
 from .exceptions import ParameterError
+from .models.common import TestStorage
 
 logger = logging.getLogger('itchatmp')
 
@@ -49,15 +50,12 @@ class WechatServer(object):
             filterRequest=False, threadPoolNumber=None):
         # init configurations
         self.config = config
-        self.atStorage = atStorage
+        self.atStorage = atStorage or TestStorage()
         self.userStorage = userStorage
         self.filterRequest = filterRequest
         self.threadPoolNumber = threadPoolNumber or ((None
             if not hasattr(os, 'cpu_count') else os.cpu_count()) or 1) * 5
-        try:
-            self.ioLoop = tornado.ioloop.IOLoop.current()
-        except:
-            self.ioLoop = None
+        self.ioLoop = tornado.ioloop.IOLoop.current()
         self.isWsgi = True
         self.debug = True
         self._replyFnDict = {}

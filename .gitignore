@@ -1,5 +1,6 @@
 build/*
 dist/*
+test/*
 itchatmp.egg-info/*
 *.pyc
 *.swp

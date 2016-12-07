@@ -1,5 +1,5 @@
 from .common import determine_wrapper
-from .mp import statistics as mpStat
+from .mpapi.mp import statistics as mpStat
 
 '''
 yiw"lpfuviwpyiw2jfu;viwp3k2d3j

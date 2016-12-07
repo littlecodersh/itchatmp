@@ -28,13 +28,13 @@ def send(msg, toUserId):
           - it supports all types: img, voc, vid, txt, nws, cad, msc
     '''
     msg = reply_msg_format(msg)
-    if not ('msgType' in msg and 'mediaId' in msg):
+    if not ('MsgType' in msg and 'MediaId' in msg):
         return ReturnValue({'errcode': -10003, 'errmsg': 
             'value of key "msgType" should be the msgType and ' +
             'value of key "mediaId" should be mediaId (for text, value is content)'
             })
     else:
-        msgType, content = msg['msgType'], msg['mediaId']
+        msgType, content = msg['MsgType'], msg['MediaId']
     if msgType not in (IMAGE, VOICE, VIDEO, TEXT, NEWS, CARD, MUSIC):
         return ReturnValue({'errcode': -10003, 'errmsg': 
             'send supports: IMAGE, VOICE, VIDEO, TEXT, NEWS, CARD, MUSIC'})

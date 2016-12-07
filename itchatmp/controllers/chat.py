@@ -1,5 +1,5 @@
 from .common import determine_wrapper as dwp
-from .qy import chat as qyChat
+from .mpapi.qy import chat as qyChat
 
 def send_some(msgType, mediaId, additionalDict={},
         targetIdList=[], partyIdList=[], tagIdList=[],

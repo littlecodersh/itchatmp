@@ -1,10 +1,6 @@
 import pickle, logging
 
-from itchatmp.server import WechatServer
-
 logger = logging.getLogger('itchatmp')
-
-__server = WechatServer(None, None, None)
 
 class AccessTokenStorage(object):
     def get_access_token(self):
@@ -49,5 +45,3 @@ class TestStorage(AccessTokenStorage):
         self.__storageDict['serverList'] = (serverList, fetchTime)
         self.__store_locally()
         logger.debug('Server list updated')
-
-if not __server.atStorage: __server.atStorage = TestStorage()

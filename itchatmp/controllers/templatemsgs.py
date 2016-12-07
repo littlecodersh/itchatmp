@@ -1,5 +1,5 @@
 from .common import determine_wrapper as dwp
-from .mp import templatemsgs as mpTMsg
+from .mpapi.mp import templatemsgs as mpTMsg
 
 def set_industry(id1, id2):
     return dwp(mpTMsg.set_industry, None,

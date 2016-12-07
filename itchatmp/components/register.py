@@ -9,8 +9,10 @@ from concurrent.futures import ThreadPoolExecutor
 
 from itchatmp.content import (NORMAL, COMPATIBLE, SAFE,
     INCOME_MSG, OUTCOME_MSG, SERVER_WAIT_TIME)
-from itchatmp.views import deconstruct_msg, construct_xml_msg, reply_msg_format
-from itchatmp.controllers.oauth import oauth, decrypt_msg, encrypt_msg
+from itchatmp.views import (
+    deconstruct_msg, construct_xml_msg, reply_msg_format,
+    decrypt_msg, encrypt_msg)
+from itchatmp.controllers.oauth import oauth
 from itchatmp.controllers.envtest import env_test
 from itchatmp.exceptions import ParameterError
 from itchatmp.log import set_logging
@@ -24,7 +26,8 @@ def load_register(core):
 
 def construct_get_post_fn(core):
     def get_fn(handler):
-        if core.filterRequest and not core.filter_request(handler.request): return ''
+        if core.filterRequest and not core.filter_request(handler.request):
+            return 'Greeting from itchatmp!'
         echostr = handler.get_argument('echostr', '')
         if handler.get_argument('msg_signature', ''):
             tns = [handler.get_argument(key, '') for
@@ -36,7 +39,7 @@ def construct_get_post_fn(core):
             valid = oauth(*([handler.get_argument(key, '') for
                 key in ('timestamp', 'nonce', 'signature')]
                 + [core.config.token]))
-        if valid: return echostr
+        return echostr if valid else 'Greeting from itchatmp!'
     def post_fn(handler):
         if core.filterRequest and not core.filter_request(handler.request):
             logger.debug('A request from unknown ip is filtered'); return None, None
@@ -140,7 +143,8 @@ def run(self, isWsgi=False, debug=True):
     MainHandler = construct_handler(self, isWsgi)
     app = tornado.web.Application(
         [('/', MainHandler)], debug=debug)
-    logger.info('itchatmp started!')
+    logger.info('itchatmp started!%s' % (
+        ' press Ctrl+C to exit.' if debug else ''))
     if isWsgi:
         return WSGIAdapter(app)
     else:

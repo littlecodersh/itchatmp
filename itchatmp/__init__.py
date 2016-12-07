@@ -1,9 +1,10 @@
 from .server import WechatConfig, WechatServer
 from .models.common import TestStorage
 from .controllers.envtest import env_test
-from .controllers.mpapi import (common, menu,
+from .controllers import (
+    application, chat, common, menu,
     customerservice, messages, users, utils, statistics,
-    oauth2)
+    templatemsgs, oauth2, wrapped)
 
 from .log import set_logging
 

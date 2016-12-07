@@ -1,5 +1,5 @@
 from .common import determine_wrapper as dwp
-from .qy import application as qyApp
+from .mpapi.qy import application as qyApp
 
 def get(agentId):
     return dwp(None, qyApp.get,

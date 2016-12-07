@@ -1,0 +1,12 @@
+site_name: 'itchatmp'
+pages:
+- '入门':
+    - '项目介绍': 'index.md'
+    - '快速入门': 'intro/quickstart.md'
+    - '环境配置': 'intro/environment.md'
+- 'API列表':
+    - '公众号': 'index.md'
+extra_css: ['docs/bootstrap/css']
+extra_javascript: ['docs/bootstrap/js']
+theme_dir: 'docs/bootstrap'
+repo_url: 'https://github.com/littlecodersh/itchatmp'

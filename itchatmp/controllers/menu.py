@@ -1,6 +1,6 @@
 from .common import determine_wrapper as dwp
-from .mp import menu as mpMenu
-from .qy import menu as qyMenu
+from .mpapi.mp import menu as mpMenu
+from .mpapi.qy import menu as qyMenu
 
 def create(menuDict, autoDecide=True, agentId=None):
     return dwp(mpMenu.create, qyMenu.create,

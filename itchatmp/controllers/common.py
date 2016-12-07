@@ -1,6 +1,6 @@
 from itchatmp.server import WechatServer
-from .mp import common as mpCommon
-from .qy import common as qyCommon
+from .mpapi.mp import common as mpCommon
+from .mpapi.qy import common as qyCommon
 
 server = WechatServer(None, None, None)
 

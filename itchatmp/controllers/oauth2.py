@@ -1,5 +1,5 @@
 from .common import determine_wrapper as dwp
-from .qy import oauth2 as qyOauth
+from .mpapi.qy import oauth2 as qyOauth
 
 def generate_code_url(redirectUri, state=None):
     return dwp(None, qyOauth.generate_code_url,
