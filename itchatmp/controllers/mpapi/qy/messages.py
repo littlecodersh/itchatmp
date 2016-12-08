@@ -103,7 +103,7 @@ def __form_send_dict(msgType, mediaId, additionalDict):
 
 @retry(n=3, waitTime=3)
 @access_token
-def upload(fileType, openedFile, additionalDict={}, permanent=False, accessToken=None):
+def upload(fileType, fileDir, additionalDict={}, permanent=False, accessToken=None):
     if not fileType in (IMAGE, VOICE, VIDEO, FILE):
         return ReturnValue({'errcode': 40004,})
     # elif fileType == VIDEO and not ('title' in additionalDict

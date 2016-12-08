@@ -15,7 +15,7 @@ get = get_producer(SERVER_URL, access_token)
 
 delete = delete_producer(SERVER_URL, access_token)
 
-def addconditional(menuDict, autoDecide=True):
+def addconditional(menuDict, autoDecide=False):
     @retry(n=3, waitTime=3)
     @access_token
     def _add(menuDict, accessToken):
@@ -30,10 +30,6 @@ def addconditional(menuDict, autoDecide=True):
     if autoDecide:
         currentMenu = get()
         for cm in currentMenu.get('conditionalmenu', []):
-            if 'menuid' in currentMenu:
-                if currentMenu['menuid'] == cm['menuid']:
-                    logger.debug('exists conditional menu with same menuid')
-                    return ReturnValue({'errcode': 0})
             if cm.get('button', []) == currentMenu['button'] and \
                     cm.get('matchrule', {}) == currentMenu['matchrule']:
                 logger.debug('exists conditional menu with same content')

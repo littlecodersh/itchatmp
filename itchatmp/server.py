@@ -77,6 +77,22 @@ class WechatServer(object):
         raise NotImplementedError()
     def send(self, msg, toUserId):
         '''
-            it is defined in components/register
+            it is defined in components/register.py
+        '''
+        raise NotImplementedError()
+    def filter_request(self, request):
+        '''
+            this is not open for calling
+            it is defined in controllers/common.py
+        '''
+        raise NotImplementedError()
+    def access_token(self, fn):
+        '''
+            it is defined in controllers/common.py
+        '''
+        raise NotImplementedError()
+    def clear_quota(self):
+        '''
+            it is defined in controllers/common.py
         '''
         raise NotImplementedError()

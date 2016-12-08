@@ -1,11 +1,14 @@
 from itchatmp.config import SERVER_URL
 from itchatmp.returnvalues import ReturnValue
+from itchatmp.server import WechatServer
 from itchatmp.utils import retry
 from ..base.common import (update_access_token_producer,
     access_token_producer, filter_request_producer)
 from ..requests import requests
 
-__all__ = ['update_access_token', 'access_token', 'get_server_ip', 'filter_request']
+__all__ = ['update_access_token', 'access_token', 'get_server_ip', 'filter_request', 'clear_quota']
+
+server = WechatServer(None, None, None)
 
 update_access_token = update_access_token_producer(
     SERVER_URL + '/cgi-bin/token?grant_type=client_credential&appid=%s&secret=%s',
@@ -28,3 +31,11 @@ def get_server_ip():
     return _get_server_ip()
 
 filter_request = filter_request_producer(get_server_ip)
+
+@retry(n=3, waitTime=3)
+@access_token
+def clear_quota(accessToken=None):
+    data = {'appid': server.config.appId}
+    r = requests.post('%s/cgi-bin/clear_quota?access_token=%s' %
+        (SERVER_URL, accessToken), data=data).json()
+    return ReturnValue(r)

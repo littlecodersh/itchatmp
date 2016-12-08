@@ -6,19 +6,24 @@ class LogSystem(object):
     loggingLevel = logging.INFO
     loggingFile = None
     def __init__(self):
+        self.cmdHandler = None
+        for handler in logging.getLogger().handlers:
+            if 'StreamHandler' in str(handler):
+                self.cmdHandler = handler
+        if self.cmdHandler is None:
+            self.cmdHandler = logging.StreamHandler()
+            logging.getLogger().addHandler(self.cmdHandler)
         self.logger = logging.getLogger('itchatmp')
         self.logger.addHandler(logging.NullHandler())
         self.logger.setLevel(self.loggingLevel)
-        self.cmdHandler = logging.StreamHandler()
         self.fileHandler = None
-        self.logger.addHandler(self.cmdHandler)
     def set_logging(self, showOnCmd=True, loggingFile=None,
             loggingLevel=logging.INFO):
         if showOnCmd != self.showOnCmd:
             if showOnCmd:
-                self.logger.addHandler(self.cmdHandler)
+                logging.getLogger().addHandler(self.cmdHandler)
             else:
-                self.logger.removeHandler(self.cmdHandler)
+                logging.getLogger().removeHandler(self.cmdHandler)
             self.showOnCmd = showOnCmd
         if loggingFile != self.loggingFile:
             if self.loggingFile is not None: # clear old fileHandler

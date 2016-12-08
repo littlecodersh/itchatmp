@@ -24,7 +24,7 @@ else:
         return cryptor.decrypt(b64decode(data))
 
 from itchatmp.content import ENCRYPT
-from itchatmp.views import deconstruct_msg, construct_xml_msg
+from itchatmp.views import deconstruct_msg, construct_msg
 
 logger = logging.getLogger('itchatmp')
 
@@ -60,9 +60,9 @@ def encrypt_msg(timestamp, nonce, signature, config, replyDict):
     ''' encrypt msg for sending to wechat
      * use AES_CBC encryption
      * return a string ready for sending
-     * as in construct_xml_msg, string in replyDict should be unicode
+     * as in construct_msg, string in replyDict should be unicode
     '''
-    text = construct_xml_msg(replyDict).encode('utf8')
+    text = construct_msg(replyDict).encode('utf8')
     text = os.urandom(16) + struct.pack('>I', len(text)) +\
         text + config.appId.encode('utf8')
     paddingAmount = 32 - (len(text) % 32)
@@ -72,7 +72,7 @@ def encrypt_msg(timestamp, nonce, signature, config, replyDict):
     s = [i.encode('utf8') for i in (timestamp, nonce, config.token)]
     s += [text]; s.sort(); s = b''.join(s)
     # Signature generated
-    return construct_xml_msg({
+    return construct_msg({
             'FromUserName': replyDict['FromUserName'],
             'ToUserName': replyDict['ToUserName'],
             'MsgType': ENCRYPT,

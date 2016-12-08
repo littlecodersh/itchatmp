@@ -115,6 +115,8 @@ def filter_request_producer(get_server_ip):
                 (datetime.replace(datetime.now() + timedelta(days=1), 
                 hour=0, minute=5, second=0) - datetime.now()).seconds,
                 lambda: clear_server_list())
-        if not __serverList: return True
+        if not __serverList:
+            logger.debug('Server list is loading, so ignore verifying once.')
+            return True
         return request.remote_ip in __serverList
     return filter_request

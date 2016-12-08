@@ -21,11 +21,12 @@ class _EVENT(object):
     VIEW = 'VIEW'
     def __eq__(self, other):
         return 'event' == other
+    def __hash__(self):
+        return hash('event')
 EVENT = _EVENT()
 ENCRYPT = 'encrypt'
 
-INCOME_MSG = (TEXT, IMAGE, VOICE, VIDEO, SHORT_VIDEO, LOCATION,
-    LINK, EVENT, EVENT.SUBSCRIBE, EVENT.SCAN, EVENT.LOCATION,
-    EVENT.CLICK, EVENT.VIEW)
+INCOME_MSG = [TEXT, IMAGE, VOICE, VIDEO, SHORT_VIDEO, LOCATION,
+    LINK, EVENT]
 
-OUTCOME_MSG = (TEXT, IMAGE, VOICE, VIDEO, MUSIC, NEWS, CARD)
+OUTCOME_MSG = [TEXT, IMAGE, VOICE, VIDEO, MUSIC, NEWS, CARD]

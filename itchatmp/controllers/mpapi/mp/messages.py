@@ -37,12 +37,12 @@
      update_news
      get_image_url
 '''
-import logging, json
+import logging, json, os, mimetypes
 
 from ..requests import requests
 from .common import access_token
 from itchatmp.utils import retry, encode_send_dict
-from itchatmp.config import SERVER_URL,
+from itchatmp.config import SERVER_URL
 from itchatmp.content import (
     IMAGE, VOICE, VIDEO, THUMB, TEXT, NEWS, CARD)
 from itchatmp.returnvalues import ReturnValue
@@ -153,10 +153,16 @@ def get(msgId, accessToken=None):
 
 @retry(n=3, waitTime=3)
 @access_token
-def upload(fileType, openedFile, additionalDict={}, permanent=False, accessToken=None):
+def upload(fileType, fileDir, additionalDict={}, permanent=False, accessToken=None):
     if not fileType in (IMAGE, VOICE, VIDEO, THUMB):
         return ReturnValue({'errcode': 40004,})
-    elif fileType == VIDEO and not ('title' in additionalDict
+    try:
+        with open(fileDir, 'rb') as f: file = f.read()
+    except:
+        return ReturnValue({'errcode': -10004,})
+    fileName = 'file' + os.path.splitext(fileDir)[1].decode('utf8', 'replace')
+    fileMime = mimetypes.guess_type(fileName)[0] or 'application/octet-stream'
+    if fileType == VIDEO and not ('title' in additionalDict
             and 'introduction' in additionalDict):
         return ReturnValue({'errcode': -10001, 'errmsg': 
             'additionalDict for type VIDEO should be: ' + 
@@ -165,20 +171,17 @@ def upload(fileType, openedFile, additionalDict={}, permanent=False, accessToken
         url = '%s/cgi-bin/material/add_material?access_token=%s&type=%s'
     else:
         url = '%s/cgi-bin/media/upload?access_token=%s&type=%s' 
+    files = {'media': (fileName, file, fileMime), }
+    if fileType == VIDEO:
+        files['description'] = (None,
+            encode_send_dict(additionalDict), 'application/json'),
     try:
-        if fileType == VIDEO:
-            files = {
-                'description': (None, encode_send_dict(additionalDict),
-                    'application/json'),
-                'file': ('tmp.mp4', openedFile, 'video/mp4') }
-        else:
-            files = {'file': openedFile}
         r = requests.post(url % (SERVER_URL, accessToken, fileType),
             files=files).json()
-        if 'media_id' in r: r['errcode'] = 0
-        return ReturnValue(r)
     except Exception as e:
         return ReturnValue({'errcode': -10001, 'errmsg': e.message})
+    if 'media_id' in r: r['errcode'] = 0
+    return ReturnValue(r)
 
 @retry(n=3, waitTime=3)
 @access_token
@@ -244,7 +247,7 @@ def batchget_material(fileType, offset=0, count=20, accessToken=None):
         'count': count, }
     data = encode_send_dict(data)
     if data is None: return ReturnValue({'errcode': -10001})
-    r = requests.post('%s/cgi-bin/material/batchget?access_token=%s'
+    r = requests.post('%s/cgi-bin/material/batchget_material?access_token=%s'
         % (SERVER_URL, accessToken), data=data).json()
     if 'total_count' in r: r['errcode'] = 0
     return ReturnValue(r)

@@ -25,9 +25,9 @@ def get(msgId):
     return determine_wrapper(mpMsg.get, None,
         msgId)
 
-def upload(fileType, openedFile, additionalDict={}, permanent=False):
-    return determine_wrapper(mpMsg.get, qyMsg.get,
-        fileType, openedFile, additionalDict, permanent)
+def upload(fileType, fileDir, additionalDict={}, permanent=False):
+    return determine_wrapper(mpMsg.upload, qyMsg.upload,
+        fileType, fileDir, additionalDict, permanent)
 
 def download(mediaId):
     return determine_wrapper(mpMsg.download, qyMsg.download,

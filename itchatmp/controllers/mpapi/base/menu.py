@@ -7,7 +7,7 @@ from itchatmp.returnvalues import ReturnValue
 logger = logging.getLogger('itchatmp')
 
 def create_producer(serverUrl, access_token):
-    def _create(menuDict, autoDecide=True, agentId=None):
+    def _create(menuDict, autoDecide=False, agentId=None):
         @retry(n=3, waitTime=3)
         @access_token
         def __create(menuDict, agentId, accessToken):

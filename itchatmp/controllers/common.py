@@ -36,5 +36,9 @@ def filter_request(request):
         qyCommon.filter_request,
         request)
 
+def clear_quota():
+    return determine_wrapper(mpCommon.clear_quota, None)
+
 server.filter_request = filter_request
 server.access_token = access_token
+server.clear_quota = clear_quota

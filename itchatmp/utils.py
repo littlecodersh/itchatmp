@@ -1,5 +1,5 @@
 import time, json
-import functools, logging
+import functools, logging, traceback
 
 logger = logging.getLogger('itchatmp')
 

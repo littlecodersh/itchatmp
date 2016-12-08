@@ -7,8 +7,9 @@ from tornado.web import RequestHandler
 from tornado.wsgi import WSGIAdapter
 from concurrent.futures import ThreadPoolExecutor
 
+from itchatmp.config import SERVER_WAIT_TIME
 from itchatmp.content import (NORMAL, COMPATIBLE, SAFE,
-    INCOME_MSG, OUTCOME_MSG, SERVER_WAIT_TIME)
+    INCOME_MSG, OUTCOME_MSG)
 from itchatmp.views import (
     deconstruct_msg, construct_msg, reply_msg_format,
     decrypt_msg, encrypt_msg)
@@ -53,9 +54,7 @@ def construct_get_post_fn(core):
                 except Exception as e:
                     logger.debug(traceback.format_exc())
                 else: # if nothing goes wrong
-                    return verify_reply(core, reply, msgDict, isActualEncrypt)
-        else:
-            logger.debug('Ignore a request because of signature')
+                    if reply: return verify_reply(core, reply, msgDict, isActualEncrypt)
         return None, None
     return get_fn, post_fn
 
@@ -171,7 +170,7 @@ def update_config(self, config=None, atStorage=None, userStorage=None,
 def run(self, isWsgi=False, debug=True):
     self.isWsgi = isWsgi
     self.debug = debug
-    set_logging(loggingLevel=logging.DEBUG if debug else logging.INFO)
+    if debug: set_logging(loggingLevel=logging.DEBUG)
     MainHandler = construct_handler(self, isWsgi)
     app = tornado.web.Application(
         [('/', MainHandler)], debug=debug)

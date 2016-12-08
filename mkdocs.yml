@@ -3,9 +3,10 @@ pages:
 - '入门':
     - '项目介绍': 'index.md'
     - '快速入门': 'intro/quickstart.md'
-    - '环境配置': 'intro/environment.md'
+- '进阶':
+    - '通用接口': 'apis/common.md'
 - 'API列表':
-    - '公众号': 'index.md'
+    - '公众号': 'apis.md'
 extra_css: ['docs/bootstrap/css']
 extra_javascript: ['docs/bootstrap/js']
 theme_dir: 'docs/bootstrap'

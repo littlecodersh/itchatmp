@@ -2,7 +2,7 @@ from .common import determine_wrapper as dwp
 from .mpapi.mp import menu as mpMenu
 from .mpapi.qy import menu as qyMenu
 
-def create(menuDict, autoDecide=True, agentId=None):
+def create(menuDict, autoDecide=False, agentId=None):
     return dwp(mpMenu.create, qyMenu.create,
         menuDict, autoDecide, agentId)
 
@@ -14,7 +14,7 @@ def delete(agentId=None):
     return dwp(mpMenu.delete, qyMenu.delete,
         agentId)
 
-def addconditional(menuDict, autoDecide=True):
+def addconditional(menuDict, autoDecide=False):
     return dwp(mpMenu.addconditional, None,
         menuDict, autoDecide)
     
