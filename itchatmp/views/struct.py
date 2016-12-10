@@ -1,4 +1,4 @@
-import time, logging, re
+import time, logging, re, os
 import traceback
 try:
     import lxml.etree as ET
@@ -42,7 +42,7 @@ def reply_msg_format(msg):
     if isinstance(msg, dict):
         r = msg
     elif hasattr(msg, 'capitalize'):
-        msgType, content = msg[:5], msg[5:]
+        msgType, content, fileDir = msg[:5], msg[5:], None
         if not re.match('@[a-z]{3}@', msgType):
             content = msgType + content
             msgType = TEXT
@@ -57,7 +57,9 @@ def reply_msg_format(msg):
         else:
             msgType = {'img': IMAGE, 'voc': VOICE, 'vid': VIDEO, 'txt': TEXT,
                 'nws': NEWS, 'cad': CARD}[msgType[1:4]]
+            fileDir = content
         r = {'MsgType': msgType, 'MediaId': content}
+        if fileDir: r['FileDir'] = fileDir
     else:
         r = ReturnValue({'errcode': -10003, 'errmsg': 
             'msg should be string or dict'})

@@ -1,6 +1,9 @@
+from itchatmp.server import WechatServer
 from .common import determine_wrapper
 from .mpapi.mp import messages as mpMsg
 from .mpapi.qy import messages as qyMsg
+
+server = WechatServer(None, None, None)
 
 def send_some(msgType, mediaId, additionalDict={},
         targetIdList=[], partyIdList=[], tagIdList=[],
@@ -59,3 +62,5 @@ def update_news(mediaId, newsDict, index=0):
 def get_image_url(openedFile):
     return determine_wrapper(mpMsg.get_image_url, qyMsg.get_image_url,
         openedFile)
+
+server.upload = upload

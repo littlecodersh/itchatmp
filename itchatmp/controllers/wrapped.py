@@ -4,8 +4,8 @@ from .mpapi.mp import wrapped as mpWrapped
 
 server = WechatServer(None, None, None)
 
-def send(msg, toUserId):
+def send(msg, toUserName, mediaId=None):
     return dwp(mpWrapped.send, None,
-        msg, toUserId)
+        msg, toUserName, mediaId)
 
 server.send = send

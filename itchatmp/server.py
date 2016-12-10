@@ -75,9 +75,14 @@ class WechatServer(object):
             it is defined in components/register
         '''
         raise NotImplementedError()
-    def send(self, msg, toUserId):
+    def upload(fileType, fileDir, additionalDict={}, permanent=False):
         '''
-            it is defined in components/register.py
+            it is defined in controllers/messages.py
+        '''
+        raise NotImplementedError()
+    def send(self, msg, toUserName, mediaId=None):
+        '''
+            it is defined in controllers/wrapped.py
         '''
         raise NotImplementedError()
     def filter_request(self, request):

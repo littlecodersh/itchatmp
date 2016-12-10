@@ -1,6 +1,7 @@
 # 通用接口
 
 本文主要介绍四个接口，与[官方文档][mp-wiki]的位置对应如下：
+
 * set_logging: 为itchatmp提供的功能
 * access_token: 开始开发-获取access_token
 * get_server_ip: 开始开发-获取微信服务器IP地址
@@ -10,7 +11,7 @@ access_token是公众号的全局唯一接口调用凭据，公众号调用各�
 
 这部分以get_server_ip为例子，介绍如何使用access_token，以及itchatmp内部access_token存储原理。
 
-## set_logging简介
+## set_logging使用简介
 
 虽然你可以通过logging实现各式各样的日志设置，但也许提供一个简单的接口可以节省你一点时间。
 
@@ -26,7 +27,7 @@ itchatmp.set_logging(showOnCmd=True, loggingFile=None, loggingLevel=logging.INFO
 
 当然，这三项都是可选的，不需要留空即可。
 
-## clear_quota使用介绍
+## clear_quota使用简介
 
 每一个接口的调用都是有每日次数的限制的，但如果不小心因为程序错误把一天的量都跑完了怎么办呢？
 

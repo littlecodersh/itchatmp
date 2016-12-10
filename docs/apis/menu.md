@@ -1,10 +1,12 @@
 # 自定义菜单
 
 本文主要介绍四个接口，与[官方文档][mp-wiki]的位置对应如下：
-* set_logging: 为itchatmp提供的功能
-* access_token: 开始开发-获取access_token
-* get_server_ip: 开始开发-获取微信服务器IP地址
-* clear_quota: 开始前必读-接口调用频次限制说明
+
+* menu.create: 自定义菜单-自定义菜单创建接口
+* menu.get: 自定义菜单-自定义菜单查询接口
+* menu.delete: 自定义菜单-自定义菜单删除接口
+* menu.addconditional: 自定义菜单-个性化菜单接口
+* menu.delconditional: 自定义菜单-个性化菜单接口
 
 自定义菜单是微信公众号的一个非常重要的功能，至于自定义菜单是什么，就是下图那个东西。
 
@@ -203,5 +205,6 @@ print(r)
 
 到这里你已经能自己创建想要的自定义菜单了（配合返回值的指导）。
 
+[mp-wiki]: https://mp.weixin.qq.com/wiki
 [menu-demo]: http://7xrip4.com1.z0.glb.clouddn.com/itchatmp/docs/menu-demo.png?imageView/2/h/200/
 [menu-homepage]: https://mp.weixin.qq.com/wiki

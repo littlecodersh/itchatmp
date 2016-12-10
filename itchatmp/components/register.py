@@ -9,7 +9,7 @@ from concurrent.futures import ThreadPoolExecutor
 
 from itchatmp.config import SERVER_WAIT_TIME
 from itchatmp.content import (NORMAL, COMPATIBLE, SAFE,
-    INCOME_MSG, OUTCOME_MSG)
+    TEXT, INCOME_MSG, OUTCOME_MSG)
 from itchatmp.views import (
     deconstruct_msg, construct_msg, reply_msg_format,
     decrypt_msg, encrypt_msg)
@@ -104,6 +104,12 @@ def verify_reply(core, reply, msgDict, isActualEncrypt):
         if reply.get('MsgType') in OUTCOME_MSG:
             reply['ToUserName'] = msgDict['FromUserName']
             reply['FromUserName'] = msgDict['ToUserName']
+            if 'FileDir' in reply and reply['MsgType'] != TEXT:
+                r = core.upload(reply['MsgType'], reply['FileDir'])
+                if not r:
+                    logger.debug(r); return None, None
+                else:
+                    reply['MediaId'] = r['media_id']
             if core.config.encryptMode == SAFE and isActualEncrypt:
                 return encrypt_msg(*(tns +
                     [core.config, reply])), reply
