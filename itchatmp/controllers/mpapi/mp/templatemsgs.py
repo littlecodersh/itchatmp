@@ -10,7 +10,6 @@ from itchatmp.returnvalues import ReturnValue
 
 logger = logging.getLogger('itchatmp')
 
-@retry(n=3, waitTime=3)
 @access_token
 def set_industry(id1, id2, accessToken=None):
     ''' set industry for your massive platform '''
@@ -19,7 +18,6 @@ def set_industry(id1, id2, accessToken=None):
         (SERVER_URL, accessToken), data=encode_send_dict(data)).json()
     return ReturnValue(r)
 
-@retry(n=3, waitTime=3)
 @access_token
 def get_industry(accessToken=None):
     ''' get industry of your massive platform '''
@@ -28,7 +26,6 @@ def get_industry(accessToken=None):
     if 'primary_industry' in r: r['errcode'] = 0
     return ReturnValue(r)
 
-@retry(n=3, waitTime=3)
 @access_token
 def add_template(templateId, accessToken=None):
     ''' add template for your massive platform '''
@@ -37,7 +34,6 @@ def add_template(templateId, accessToken=None):
         (SERVER_URL, accessToken), data=encode_send_dict(data)).json()
     return ReturnValue(r)
 
-@retry(n=3, waitTime=3)
 @access_token
 def delete_templates(templateId, accessToken=None):
     ''' delete template of your massive platform '''
@@ -46,7 +42,6 @@ def delete_templates(templateId, accessToken=None):
         (SERVER_URL, accessToken), data=encode_send_dict(data)).json()
     return ReturnValue(r)
 
-@retry(n=3, waitTime=3)
 @access_token
 def get_templates(accessToken=None):
     ''' get templates of your massive platform '''
@@ -55,7 +50,6 @@ def get_templates(accessToken=None):
     if 'template_list' in r: r['errcode'] = 0
     return ReturnValue(r)
 
-@retry(n=3, waitTime=3)
 @access_token
 def send(templateId, msgDict, toUserId, accessToken=None):
     ''' send template to your massive platform users '''

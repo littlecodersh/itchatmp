@@ -6,6 +6,7 @@ TRANSLATION = {}
 
 class ReturnValue(dict):
     def __init__(self, returnValueDict={}):
+        self._wrap_result = None
         for k, v in returnValueDict.items(): self[k] = v
         if TRANSLATE:
             self['rawmsg'] = self.get('errmsg', '')

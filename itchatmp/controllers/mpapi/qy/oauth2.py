@@ -21,7 +21,6 @@ def generate_code_url(redirectUri, state=None):
         '&state=%s#wechat_redirect') % \
         (__server.config.copId, quote(redirectUri), quote((state or str(int(time.time())))))
 
-@retry(n=3, waitTime=3)
 @access_token
 def get_user_info(code, accessToken=None):
     params = {
@@ -32,7 +31,6 @@ def get_user_info(code, accessToken=None):
     if 'DeviceId' in r: r['errcode'] = 0
     return ReturnValue(r)
 
-@retry(n=3, waitTime=3)
 @access_token
 def user_id_open_id_switch(userId=None, openId=None, agentId=None, accessToken=None):
     data = {}
@@ -48,7 +46,6 @@ def user_id_open_id_switch(userId=None, openId=None, agentId=None, accessToken=N
     r = requests.post(url % COMPANY_URL, data=data).json()
     return ReturnValue(r)
 
-@retry(n=3, waitTime=3)
 @access_token
 def get_login_info(code, accessToken=None):
     data = {'auth_code': code, }

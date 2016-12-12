@@ -4,7 +4,6 @@ from itchatmp.utils import retry, encode_send_dict
 from ..requests import requests
 from .common import access_token
 
-@retry(n=3, waitTime=3)
 @access_token
 def get(agentId, accessToken=None):
     params = {
@@ -14,7 +13,6 @@ def get(agentId, accessToken=None):
         params=params).json()
     return ReturnValue(r)
 
-@retry(n=3, waitTime=3)
 @access_token
 def set(agentId, **kwargs):
     kwargs['agentid'] = agentId
@@ -24,7 +22,6 @@ def set(agentId, **kwargs):
         (COMPANY_URL, kwargs['accessToken']), data=data).json()
     return ReturnValue(r)
 
-@retry(n=3, waitTime=3)
 @access_token
 def list(accessToken=None):
     r = requests.get('%s/cgi-bin/agent/list?access_token=%s' % \

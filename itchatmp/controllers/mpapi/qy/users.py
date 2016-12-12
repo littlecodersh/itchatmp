@@ -12,7 +12,6 @@ from itchatmp.returnvalues import ReturnValue
 __server = WechatServer(None, None, None)
 logger = logging.getLogger('itchatmp')
 
-@retry(n=3, waitTime=3)
 @access_token
 def authorize_user(userId, accessToken=None):
     params = {
@@ -21,7 +20,6 @@ def authorize_user(userId, accessToken=None):
     r = requests.get('%s/cgi-bin/user/authsucc' % COMPANY_URL, params=params).json()
     return ReturnValue(r)
 
-@retry(n=3, waitTime=3)
 @access_token
 def create_department(name, parentId=1, order=None, id=None, accessToken=None):
     data = {
@@ -35,7 +33,6 @@ def create_department(name, parentId=1, order=None, id=None, accessToken=None):
         (COMPANY_URL, accessToken), data=data).json()
     return ReturnValue(r)
 
-@retry(n=3, waitTime=3)
 @access_token
 def update_department(id, name=None, parentId=None, order=None, accessToken=None):
     data = {'id': id}
@@ -48,7 +45,6 @@ def update_department(id, name=None, parentId=None, order=None, accessToken=None
         (COMPANY_URL, accessToken), data=data).json()
     return ReturnValue(r)
 
-@retry(n=3, waitTime=3)
 @access_token
 def delete_department(id, accessToken=None):
     params = {
@@ -57,7 +53,6 @@ def delete_department(id, accessToken=None):
     r = requests.get('%s/cgi-bin/department/delete' % COMPANY_URL, params=params).json()
     return ReturnValue(r)
 
-@retry(n=3, waitTime=3)
 @access_token
 def get_departments(parentId, accessToken=None):
     params = {
@@ -66,7 +61,6 @@ def get_departments(parentId, accessToken=None):
     r = requests.get('%s/cgi-bin/department/list' % COMPANY_URL, params=params).json()
     return ReturnValue(r)
 
-@retry(n=3, waitTime=3)
 @access_token
 def create_user(userId, name, departmentIdList,
         position=None, mobile=None, gender=None, email=None,
@@ -86,7 +80,6 @@ def create_user(userId, name, departmentIdList,
         (COMPANY_URL, accessToken), data=data).json()
     return ReturnValue(r)
 
-@retry(n=3, waitTime=3)
 @access_token
 def update_user(userId, name=None, departmentIdList=None,
         position=None, mobile=None, gender=None, email=None,
@@ -106,7 +99,6 @@ def update_user(userId, name=None, departmentIdList=None,
         (COMPANY_URL, accessToken), data=data).json()
     return ReturnValue(r)
 
-@retry(n=3, waitTime=3)
 @access_token
 def delete_users(userId, accessToken=None):
     ''' delete user using userId
@@ -131,7 +123,6 @@ def get_user_info(userId):
      * userId can be a list or only one userId
      * this is for creating api similiar to massive platform
     '''
-    @retry(n=3, waitTime=3)
     @access_token
     def _get_user_info(userId):
         params = {
@@ -153,7 +144,6 @@ def get_user_info(userId):
     else:
         return _get_user_info(userId)
 
-@retry(n=3, waitTime=3)
 @access_token
 def get_users(nextOpenId='', departmentId=None, fetchChild=False, status=4, accessToken=None):
     ''' get users of the department
@@ -169,7 +159,6 @@ def get_users(nextOpenId='', departmentId=None, fetchChild=False, status=4, acce
     r = requests.get('%s/cgi-bin/user/simplelist' % SERVER_URL, params=params).json()
     return ReturnValue(r)
 
-@retry(n=3, waitTime=3)
 @access_token
 def get_detailed_users(nextOpenId='',
         departmentId=None, fetchChild=False, status=4, accessToken=None):
@@ -186,7 +175,6 @@ def get_detailed_users(nextOpenId='',
     r = requests.get('%s/cgi-bin/user/list' % SERVER_URL, params=params).json()
     return ReturnValue(r)
 
-@retry(n=3, waitTime=3)
 @access_token
 def create_tag(name, id=None, accessToken=None):
     data = {'tagname': name}
@@ -197,14 +185,12 @@ def create_tag(name, id=None, accessToken=None):
         % (COMPANY_URL, accessToken), data=data).json()
     return ReturnValue(r)
 
-@retry(n=3, waitTime=3)
 @access_token
 def get_tags(accessToken=None):
     r = requests.get('%s/cgi-bin/tag/list?access_token=%s'
         % (SERVER_URL, accessToken)).json()
     return ReturnValue(r)
 
-@retry(n=3, waitTime=3)
 @access_token
 def update_tag(id, name, accessToken=None):
     data = encode_send_dict({'tagid': id, 'tagname': name, })
@@ -213,7 +199,6 @@ def update_tag(id, name, accessToken=None):
         % (COMPANY_URL, accessToken), data=data).json()
     return ReturnValue(r)
 
-@retry(n=3, waitTime=3)
 @access_token
 def delete_tag(id, accessToken=None):
     params = {
@@ -222,7 +207,6 @@ def delete_tag(id, accessToken=None):
     r = requests.get('%s/cgi-bin/tag/delete' % COMPANY_URL, params=params).json()
     return ReturnValue(r)
 
-@retry(n=3, waitTime=3)
 @access_token
 def get_users_of_tag(id, nextOpenId='', accessToken=None):
     params = {
@@ -231,7 +215,6 @@ def get_users_of_tag(id, nextOpenId='', accessToken=None):
     r = requests.get('%s/cgi-bin/tag/get' % COMPANY_URL, params=params).json()
     return ReturnValue(r)
 
-@retry(n=3, waitTime=3)
 @access_token
 def add_users_into_tag(id, userIdList=None, partyList=None, accessToken=None):
     if not (userIdList or partyList):
@@ -249,7 +232,6 @@ def add_users_into_tag(id, userIdList=None, partyList=None, accessToken=None):
     if 'invalidlist' in r or 'invalidparty' in r: r['errcode'] = 40070
     return ReturnValue(r)
 
-@retry(n=3, waitTime=3)
 @access_token
 def delete_users_of_tag(id, userIdList=None, partyList=None, accessToken=None):
     if not (userIdList or partyList):
@@ -281,7 +263,6 @@ def upload_contract(csvMediaId, callbackUrl, method='sync'):
             'encodingaeskey': __server.config.encodingAesKey, }}
     data = encode_send_dict(data)
     if data is None: return ReturnValue({'errcode': -10001})
-    @retry(n=3, waitTime=3)
     @access_token
     def upload(method, accessToken=None):
         url = '%s/cgi-bin/batch/%s?access_token=%s' % \
@@ -290,7 +271,6 @@ def upload_contract(csvMediaId, callbackUrl, method='sync'):
         return ReturnValue(r)
     return upload(method)
 
-@retry(n=3, waitTime=3)
 @access_token
 def get_result(jobId, accessToken=None):
     params = {

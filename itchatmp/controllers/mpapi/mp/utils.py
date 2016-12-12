@@ -40,7 +40,6 @@ def create_qrcode(sceneData, expire=2592000):
             data['action_name'] = 'QR_LIMIT_STR_SCENE'
             data['action_info']['scene']['scene_str'] = sceneData
 
-    @retry(n=3, waitTime=3)
     @access_token
     def _create_qrcode(data, accessToken=None):
         data = encode_send_dict(data)
@@ -51,7 +50,6 @@ def create_qrcode(sceneData, expire=2592000):
         return ReturnValue(r)
     return _create_qrcode(data)
 
-@retry(n=3, waitTime=3)
 def download_qrcode(ticket):
     params = {'ticket': ticket}
     r = requests.get('https://mp.weixin.qq.com/cgi-bin/showqrcode',
@@ -64,7 +62,6 @@ def download_qrcode(ticket):
             tempStorage.write(block)
         return ReturnValue({'file': tempStorage, 'errcode': 0})
 
-@retry(n=3, waitTime=3)
 @access_token
 def long_url_to_short(url, accessToken=None):
     data = {'action': 'long2short', 'long_url': url}

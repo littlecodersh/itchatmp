@@ -8,7 +8,6 @@ logger = logging.getLogger('itchatmp')
 
 def create_producer(serverUrl, access_token):
     def _create(menuDict, autoDecide=False, agentId=None):
-        @retry(n=3, waitTime=3)
         @access_token
         def __create(menuDict, agentId, accessToken):
             data = encode_send_dict(menuDict)
@@ -27,7 +26,6 @@ def create_producer(serverUrl, access_token):
     return _create
 
 def get_producer(serverUrl, access_token):
-    @retry(n=3, waitTime=3)
     @access_token
     def _get(agentId=None, accessToken=None):
         url = '%s/cgi-bin/menu/get?access_token=%s' % (serverUrl, accessToken)
@@ -38,7 +36,6 @@ def get_producer(serverUrl, access_token):
     return _get
 
 def delete_producer(serverUrl, access_token):
-    @retry(n=3, waitTime=3)
     @access_token
     def _delete(agentId=None, accessToken=None):
         url = '%s/cgi-bin/menu/delete?access_token=%s' % (serverUrl, accessToken)

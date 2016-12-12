@@ -17,22 +17,23 @@ update_access_token = update_access_token_producer(
 access_token = access_token_producer(update_access_token)
 
 def get_server_ip():
-    @retry(n=3, waitTime=3)
     @access_token
     def _get_server_ip(accessToken=None):
         url = '%s/cgi-bin/getcallbackip?access_token=%s' % \
             (SERVER_URL, accessToken)
-        r = requests.get(url).json()
-        if 'ip_list' in r:
-            r['errcode'] = 0
-            for i, v in enumerate(r['ip_list']):
-                r['ip_list'][i] = v[:v.rfind('/')]
-        return ReturnValue(r)
+        r = requests.get(url)
+        def _wrap_result(result):
+            if 'ip_list' in result:
+                result['errcode'] = 0
+                for i, v in enumerate(result['ip_list']):
+                    result['ip_list'][i] = v[:v.rfind('/')]
+            return result
+        r._wrap_result = _wrap_result
+        return r
     return _get_server_ip()
 
 filter_request = filter_request_producer(get_server_ip)
 
-@retry(n=3, waitTime=3)
 @access_token
 def clear_quota(accessToken=None):
     data = {'appid': server.config.appId}

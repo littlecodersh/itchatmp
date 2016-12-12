@@ -1,3 +1,5 @@
+from tornado.concurrent import Future
+
 from itchatmp.server import WechatServer
 from .mpapi.mp import common as mpCommon
 from .mpapi.qy import common as qyCommon

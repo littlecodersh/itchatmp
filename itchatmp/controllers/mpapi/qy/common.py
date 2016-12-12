@@ -14,7 +14,6 @@ update_access_token = update_access_token_producer(
 access_token = access_token_producer(update_access_token)
 
 def get_server_ip():
-    @retry(n=3, waitTime=3)
     @access_token
     def _get_server_ip(accessToken=None):
         url = '%s/cgi-bin/getcallbackip?access_token=%s' % \

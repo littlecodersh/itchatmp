@@ -46,7 +46,7 @@ setup(
     # simple. Or you can use find_packages().
     packages=find_packages(),
 
-    install_requires=['futures', 'cryptography', 'requests'], # lxml
+    install_requires=['tornado', 'futures', 'cryptography', 'requests'], # lxml
 
     # List additional groups of dependencies here
     extras_require={},

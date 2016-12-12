@@ -16,7 +16,6 @@ get = get_producer(SERVER_URL, access_token)
 delete = delete_producer(SERVER_URL, access_token)
 
 def addconditional(menuDict, autoDecide=False):
-    @retry(n=3, waitTime=3)
     @access_token
     def _add(menuDict, accessToken):
         data = encode_send_dict(menuDict)
@@ -36,14 +35,12 @@ def addconditional(menuDict, autoDecide=False):
                 return ReturnValue({'errcode': 0})
     return _add(menuDict)
     
-@retry(n=3, waitTime=3)
 @access_token
 def delconditional(menuId, accessToken=None):
     r = requests.post('%s/cgi-bin/menu/delconditional?access_token=%s' % (
         SERVER_URL, accessToken), json={'menuid': menuId}).json()
     return ReturnValue(r)
 
-@retry(n=3, waitTime=3)
 @access_token
 def trymatch(userId, accessToken=None):
     ''' get menu of specific user
@@ -53,7 +50,6 @@ def trymatch(userId, accessToken=None):
         SERVER_URL, accessToken), json={'user_id': userId}).json()
     return ReturnValue(r)
 
-@retry(n=3, waitTime=3)
 @access_token
 def get_current_selfmenu_info(accessToken=None):
     r = requests.get(

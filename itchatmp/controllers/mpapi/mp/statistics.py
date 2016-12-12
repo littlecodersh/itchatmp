@@ -43,7 +43,6 @@ def fn_producer(fnName, maxTimeSection):
         startTime, endTime = format_time(startTime, timeSection, maxTimeSection)
         if endTime is None: return startTime
         print(startTime, endTime)
-        @retry(n=3, waitTime=3)
         @access_token
         def __fn_producer(startTime, endTime, accessToken=None):
             data = {'begin_date': startTime, 'end_date': endTime}

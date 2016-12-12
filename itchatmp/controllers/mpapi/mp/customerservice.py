@@ -10,7 +10,6 @@ from itchatmp.returnvalues import ReturnValue
 
 logger = logging.getLogger('itchatmp')
 
-@retry(n=3, waitTime=3)
 @access_token
 def get(accessToken=None):
     r = requests.post('%s/cgi-bin/customservice/getkflist?access_token=%s'
@@ -19,7 +18,6 @@ def get(accessToken=None):
     return ReturnValue(r)
 
 def add(accountDict, autoDecide=True):
-    @retry(n=3, waitTime=3)
     @access_token
     def _add(accountDict, accessToken):
         data = encode_send_dict(accountDict)
@@ -36,7 +34,6 @@ def add(accountDict, autoDecide=True):
     return _add(accountDict)
 
 def update(accountDict, autoDecide=True):
-    @retry(n=3, waitTime=3)
     @access_token
     def _update(accountDict, accessToken):
         data = encode_send_dict(accountDict)
@@ -57,7 +54,6 @@ def update(accountDict, autoDecide=True):
     return _update(accountDict)
 
 def delete(accountDict, autoDecide=True):
-    @retry(n=3, waitTime=3)
     @access_token
     def _delete(accountDict, accessToken):
         data = encode_send_dict(accountDict)
@@ -74,7 +70,6 @@ def delete(accountDict, autoDecide=True):
         return _delete(accountDict)
     return ReturnValue({'errcode': 61452})
 
-@retry(n=3, waitTime=3)
 @access_token
 def set_head_image(openedFile, kfAccount, accessToken=None):
     try:
@@ -86,7 +81,6 @@ def set_head_image(openedFile, kfAccount, accessToken=None):
     except Exception as e:
         return ReturnValue({'errcode': -10001, 'errmsg': e.message})
 
-@retry(n=3, waitTime=3)
 @access_token
 def send(msgType, mediaId, additionalDict={}, toUserId='', accessToken=None):
     msgDict = __form_send_dict(msgType, mediaId, additionalDict)

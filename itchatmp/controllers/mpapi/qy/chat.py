@@ -8,7 +8,6 @@ from itchatmp.returnvalues import ReturnValue
 
 logger = logging.getLogger('itchatmp')
 
-@retry(n=3, waitTime=3)
 @access_token
 def create(chatId, name, ownerId, userIdList, accessToken=None):
     if ownerId not in userIdList:
@@ -25,7 +24,6 @@ def create(chatId, name, ownerId, userIdList, accessToken=None):
         (COMPANY_URL, accessToken), data=data).json()
     return ReturnValue(r)
 
-@retry(n=3, waitTime=3)
 @access_token
 def get(chatId, accessToken=None):
     params = {
@@ -35,7 +33,6 @@ def get(chatId, accessToken=None):
         params=params).json()
     return ReturnValue(r)
 
-@retry(n=3, waitTime=3)
 @access_token
 def update(chatId, opUserId, name=None, ownerId=None,
         addUserIdList=None, delUserIdList=None, accessToken=None):
@@ -54,7 +51,6 @@ def update(chatId, opUserId, name=None, ownerId=None,
         (COMPANY_URL, accessToken), data=data).json()
     return ReturnValue(r)
 
-@retry(n=3, waitTime=3)
 @access_token
 def quit(chatId, opUserId, accessToken=None):
     data = {
@@ -66,7 +62,6 @@ def quit(chatId, opUserId, accessToken=None):
         (COMPANY_URL, accessToken), data=data).json()
     return ReturnValue(r)
 
-@retry(n=3, waitTime=3)
 @access_token
 def clear_notify(ownerId, chatId=None, userId=None, accessToken=None):
     data = {
@@ -80,7 +75,6 @@ def clear_notify(ownerId, chatId=None, userId=None, accessToken=None):
         (COMPANY_URL, accessToken), data=data).json()
     return ReturnValue(r)
 
-@retry(n=3, waitTime=3)
 @access_token
 def send(msgType, mediaId, additionalDict={}, senderId=None,
         userId=None, chatId=None, accessToken=None):
@@ -111,7 +105,6 @@ def __form_send_dict(msgType, mediaId, additionalDict):
         NEWS: {'mpnews':{'media_id': mediaId}, 'msgtype': 'mpnews'},
         }[msgType]
 
-@retry(n=3, waitTime=3)
 @access_token
 def set_mute(muteList=[], cancelList=[], accessToken=None):
     l = []

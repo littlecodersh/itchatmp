@@ -49,7 +49,6 @@ from itchatmp.returnvalues import ReturnValue
 
 logger = logging.getLogger('itchatmp')
 
-@retry(n=3, waitTime=3)
 @access_token
 def send_some(msgType, mediaId, additionalDict={},
         targetIdList=[], partyIdList=[], tagIdList=[],
@@ -63,7 +62,6 @@ def send_some(msgType, mediaId, additionalDict={},
         (SERVER_URL, accessToken), data=encode_send_dict(msgDict)).json()
     return ReturnValue(r)
 
-@retry(n=3, waitTime=3)
 @access_token
 def send_all(msgType, mediaId, additionalDict={}, tagId=None, accessToken=None):
     msgDict = __form_send_dict(msgType, mediaId, additionalDict)
@@ -77,7 +75,6 @@ def send_all(msgType, mediaId, additionalDict={}, tagId=None, accessToken=None):
     if 'media_id' in r: r['errcode'] = 0
     return ReturnValue(r)
 
-@retry(n=3, waitTime=3)
 @access_token
 def preview(msgType, mediaId, additionalDict={},
         toUserId=None, toWxAccount=None, accessToken=None):
@@ -95,7 +92,6 @@ def preview(msgType, mediaId, additionalDict={},
     except Exception as e:
         return ReturnValue({'errcode': 40035, 'errmsg': e.message})
 
-@retry(n=3, waitTime=3)
 @access_token
 def form_video_id(mediaId, additionalDict, accessToken=None):
     ''' in theory video needs another method to get media_id for sending '''
@@ -131,7 +127,6 @@ def __form_send_dict(msgType, mediaId, additionalDict):
         CARD: {'wxcard': {'card_id': mediaId}, 'msgtype': 'wxcard'},
         }[msgType]
 
-@retry(n=3, waitTime=3)
 @access_token
 def delete(msgId, accessToken=None):
     try:
@@ -141,7 +136,6 @@ def delete(msgId, accessToken=None):
     except Exception as e:
         return ReturnValue({'errcode': -10001, 'errmsg': e.message})
 
-@retry(n=3, waitTime=3)
 @access_token
 def get(msgId, accessToken=None):
     try:
@@ -151,7 +145,6 @@ def get(msgId, accessToken=None):
     except Exception as e:
         return ReturnValue({'errcode': -10001, 'errmsg': e.message})
 
-@retry(n=3, waitTime=3)
 @access_token
 def upload(fileType, fileDir, additionalDict={}, permanent=False, accessToken=None):
     if not fileType in (IMAGE, VOICE, VIDEO, THUMB):
@@ -183,7 +176,6 @@ def upload(fileType, fileDir, additionalDict={}, permanent=False, accessToken=No
     if 'media_id' in r: r['errcode'] = 0
     return ReturnValue(r)
 
-@retry(n=3, waitTime=3)
 @access_token
 def download(mediaId, accessToken=None):
     try:
@@ -199,7 +191,6 @@ def download(mediaId, accessToken=None):
     except Exception as e:
         return ReturnValue({'errcode': -10001, 'errmsg': e.message})
 
-@retry(n=3, waitTime=3)
 @access_token
 def get_material(mediaId, accessToken=None):
     data = {'media_id': mediaId}
@@ -218,7 +209,6 @@ def get_material(mediaId, accessToken=None):
         return ReturnValue({'file': tempStorage, 'errcode': 0})
     return ReturnValue(r)
 
-@retry(n=3, waitTime=3)
 @access_token
 def delete_material(mediaId, accessToken=None):
     try:
@@ -228,7 +218,6 @@ def delete_material(mediaId, accessToken=None):
     except Exception as e:
         return ReturnValue({'errcode': -10001, 'errmsg': e.message})
 
-@retry(n=3, waitTime=3)
 @access_token
 def get_materialcount(accessToken=None):
     r = requests.get('%s/cgi-bin/material/get_materialcount?access_token=%s'
@@ -236,7 +225,6 @@ def get_materialcount(accessToken=None):
     if 'voice_count' in r: r['errcode'] = 0
     return ReturnValue(r)
 
-@retry(n=3, waitTime=3)
 @access_token
 def batchget_material(fileType, offset=0, count=20, accessToken=None):
     if not fileType in (IMAGE, VOICE, VIDEO, THUMB):
@@ -252,7 +240,6 @@ def batchget_material(fileType, offset=0, count=20, accessToken=None):
     if 'total_count' in r: r['errcode'] = 0
     return ReturnValue(r)
 
-@retry(n=3, waitTime=3)
 @access_token
 def create_news(newsDict, permanent=False, accessToken=None):
     if permanent:
@@ -267,7 +254,6 @@ def create_news(newsDict, permanent=False, accessToken=None):
     except Exception as e:
         return ReturnValue({'errcode': -10001, 'errmsg': e.message})
 
-@retry(n=3, waitTime=3)
 @access_token
 def update_news(mediaId, newsDict, index=0, accessToken=None):
     data = {
@@ -280,7 +266,6 @@ def update_news(mediaId, newsDict, index=0, accessToken=None):
         (SERVER_URL, accessToken), data=data).json()
     return ReturnValue(r)
 
-@retry(n=3, waitTime=3)
 @access_token
 def get_image_url(openedFile, accessToken=None):
     r = requests.post('%s/cgi-bin/media/uploadimg?access_token=%s' % 

@@ -2,6 +2,8 @@ import functools, logging, time, threading
 from datetime import datetime, timedelta
 
 from ..requests import requests
+from tornado import gen
+from itchatmp.config import COROUTINE
 from itchatmp.server import WechatServer
 from itchatmp.utils import retry
 from itchatmp.returnvalues import ReturnValue
@@ -15,7 +17,7 @@ __AUTO_MAINTAIN = False
 __serverList = None
 
 def auto_maintain_thread(firstCallResult=None, tokenUrl=None, appIdFn=None):
-    r = firstCallResult or update_access_token_producer(tokenUrl, appIdFn)()
+    r = firstCallResult or update_access_token_producer(tokenUrl, appIdFn, True)()
     if not r:
         __server.ioLoop.call_later(
             (datetime.replace(datetime.now() + timedelta(days=1), 
@@ -32,62 +34,111 @@ def maintain_access_token(firstCallResult=None, tokenUrl=None, appIdFn=None):
         args=(firstCallResult, tokenUrl, appIdFn))
     t.setDaemon(True); t.start()
 
-def update_access_token_producer(tokenUrl, appIdFn):
-    @retry(n=3, waitTime=3)
-    def _update_access_token():
-        ''' function to update access token
-         * auto-maintain begins when this function is called for the first time
-           - of course, if isWsgi or haven't started, auto-maintain will not start
-         * If auto-maintain failed, it will restart tomorrow 0004h:30
-         * will return ReturnValue object (equals to True) if success
-         * will return ReturnValue object (equals to False) if fail
-         * ReturnValue object contains why update failed
-        '''
-        global __AUTO_MAINTAIN
-        url = tokenUrl % (appIdFn(__server), __server.config.appSecret)
-        r = requests.get(url).json()
-        if 'access_token' in r:
-            __server.atStorage.store_access_token(
-                r['access_token'], int(time.time()) + r['expires_in'])
-            r['errcode'] = 0
-            r = ReturnValue(r)
-        else:
-            r = ReturnValue(r)
-            logger.debug('Failed to get token: %s' %r)
-        if not __AUTO_MAINTAIN and not __server.isWsgi:
-            __AUTO_MAINTAIN = True
-            maintain_access_token(r, tokenUrl, appIdFn)
-        return r
-    return _update_access_token
+def update_access_token_producer(tokenUrl, appIdFn, forceSync=False):
+    ''' function to update access token
+     * auto-maintain begins when this function is called for the first time
+       - of course, if isWsgi or haven't started, auto-maintain will not start
+     * If auto-maintain failed, it will restart tomorrow 0004h:30
+     * will return ReturnValue object (equals to True) if success
+     * will return ReturnValue object (equals to False) if fail
+     * ReturnValue object contains why update failed
+    '''
+    if COROUTINE and not forceSync:
+        @gen.coroutine
+        def _update_access_token():
+            global __AUTO_MAINTAIN
+            url = tokenUrl % (appIdFn(__server), __server.config.appSecret)
+            r = (yield requests.get(url)).json()
+            if 'access_token' in r:
+                __server.atStorage.store_access_token(
+                    r['access_token'], int(time.time()) + r['expires_in'])
+                r['errcode'] = 0
+                r = ReturnValue(r)
+            else:
+                r = ReturnValue(r)
+                logger.debug('Failed to get token: %s' %r)
+            if not __AUTO_MAINTAIN and not __server.isWsgi:
+                __AUTO_MAINTAIN = True
+                maintain_access_token(r, tokenUrl, appIdFn)
+            raise gen.Return(r)
+        return _update_access_token
+    else:
+        def _update_access_token():
+            global __AUTO_MAINTAIN
+            url = tokenUrl % (appIdFn(__server), __server.config.appSecret)
+            r = requests.get(url).json()
+            if 'access_token' in r:
+                __server.atStorage.store_access_token(
+                    r['access_token'], int(time.time()) + r['expires_in'])
+                r['errcode'] = 0
+                r = ReturnValue(r)
+            else:
+                r = ReturnValue(r)
+                logger.debug('Failed to get token: %s' %r)
+            if not __AUTO_MAINTAIN and not __server.isWsgi:
+                __AUTO_MAINTAIN = True
+                maintain_access_token(r, tokenUrl, appIdFn)
+            return r
+        return _update_access_token
 
 def access_token_producer(tokenFn):
-    def _access_token(fn):
-        ''' wrapper for functions need accessToken
-         * accessToken should be a key argument of the wrapped fn
-           ..code:: python
-                @access_token
-                def fn(a, b, c, accessToken=False):
-                    pass
-         * if accessToken is not successfully fetched, wrapped fn will return why
-        '''
-        @functools.wraps(fn)
-        def _access_token(*args, **kwargs):
-            accessToken, expireTime = __server.atStorage.get_access_token()
-            if expireTime < time.time():
-                updateResult = tokenFn()
-                if not updateResult: return updateResult
+    ''' wrapper for functions need accessToken
+     * accessToken should be a key argument of the wrapped fn
+       ..code:: python
+            @access_token
+            def fn(a, b, c, accessToken=False):
+                pass
+     * if accessToken is not successfully fetched, wrapped fn will return why
+    '''
+    if COROUTINE:
+        def _access_token(fn):
+            @gen.coroutine
+            @functools.wraps(fn)
+            def _access_token(*args, **kwargs):
                 accessToken, expireTime = __server.atStorage.get_access_token()
-            kwargs['accessToken'] = accessToken
-            r = fn(*args, **kwargs)
-            if isinstance(r, ReturnValue) and r.get('errcode') == 40014: # token timeout
-                updateResult = tokenFn()
-                if not updateResult: return updateResult
+                if expireTime < time.time():
+                    updateResult = yield tokenFn()
+                    if not updateResult: raise gen.Return(updateResult)
+                    accessToken, expireTime = __server.atStorage.get_access_token()
+                kwargs['accessToken'] = accessToken
+                future = fn(*args, **kwargs)
+                r = yield future
+                if r.json().get('errcode') == 40014: # token timeout
+                    updateResult = yield tokenFn()
+                    if not updateResult: raise gen.Return(updateResult)
+                    accessToken, expireTime = __server.atStorage.get_access_token()
+                    kwargs['accessToken'] = accessToken
+                    future = fn(*args, **kwargs)
+                    r = yield future
+                wrap_fn = getattr(future, '_wrap_result', None)
+                r = ReturnValue(r.json())
+                if wrap_fn is not None: r = wrap_fn(r)
+                raise gen.Return(r)
+            return _access_token
+        return _access_token
+    else:
+        def _access_token(fn):
+            @functools.wraps(fn)
+            def _access_token(*args, **kwargs):
                 accessToken, expireTime = __server.atStorage.get_access_token()
+                if expireTime < time.time():
+                    updateResult = tokenFn()
+                    if not updateResult: return updateResult
+                    accessToken, expireTime = __server.atStorage.get_access_token()
                 kwargs['accessToken'] = accessToken
                 r = fn(*args, **kwargs)
-            return r
+                if r.json().get('errcode') == 40014: # token timeout
+                    updateResult = tokenFn()
+                    if not updateResult: return updateResult
+                    accessToken, expireTime = __server.atStorage.get_access_token()
+                    kwargs['accessToken'] = accessToken
+                    r = fn(*args, **kwargs)
+                wrap_fn = getattr(future, '_wrap_result', None)
+                r = ReturnValue(r.json())
+                if wrap_fn is not None: r = wrap_fn(r)
+                return r
+            return _access_token
         return _access_token
-    return _access_token
 
 def set_server_list(get_server_ip):
     global __serverList
