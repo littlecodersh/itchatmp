@@ -15,40 +15,57 @@ def set_industry(id1, id2, accessToken=None):
     ''' set industry for your massive platform '''
     data = {'industry_id1': str(id1), 'industry_id2': str(id2)}
     r = requests.post('%s/cgi-bin/template/api_set_industry?access_token=%s' % 
-        (SERVER_URL, accessToken), data=encode_send_dict(data)).json()
-    return ReturnValue(r)
+        (SERVER_URL, accessToken), data=encode_send_dict(data))
+    def _wrap_result(result):
+        return ReturnValue(result.json())
+    r._wrap_result = _wrap_result
+    return r
 
 @access_token
 def get_industry(accessToken=None):
     ''' get industry of your massive platform '''
     r = requests.get('%s/cgi-bin/template/get_industry?access_token=%s' % 
-        (SERVER_URL, accessToken)).json()
-    if 'primary_industry' in r: r['errcode'] = 0
-    return ReturnValue(r)
+        (SERVER_URL, accessToken))
+    def _wrap_result(result):
+        result = ReturnValue(result.json())
+        if 'primary_industry' in result: result['errcode'] = 0
+        return result
+    r._wrap_result = _wrap_result
+    return r
 
 @access_token
 def add_template(templateId, accessToken=None):
     ''' add template for your massive platform '''
     data = {'template_id_short': templateId}
     r = requests.post('%s/cgi-bin/template/api_add_template?access_token=%s' % 
-        (SERVER_URL, accessToken), data=encode_send_dict(data)).json()
-    return ReturnValue(r)
+        (SERVER_URL, accessToken), data=encode_send_dict(data))
+    def _wrap_result(result):
+        return ReturnValue(result.json())
+    r._wrap_result = _wrap_result
+    return r
 
 @access_token
 def delete_templates(templateId, accessToken=None):
     ''' delete template of your massive platform '''
     data = {'template_id': templateId}
     r = requests.post('%s/cgi-bin/template/del_private_template?access_token=%s' % 
-        (SERVER_URL, accessToken), data=encode_send_dict(data)).json()
-    return ReturnValue(r)
+        (SERVER_URL, accessToken), data=encode_send_dict(data))
+    def _wrap_result(result):
+        return ReturnValue(result.json())
+    r._wrap_result = _wrap_result
+    return r
 
 @access_token
 def get_templates(accessToken=None):
     ''' get templates of your massive platform '''
     r = requests.get('%s/cgi-bin/template/get_all_private_template?access_token=%s' % 
-        (SERVER_URL, accessToken)).json()
-    if 'template_list' in r: r['errcode'] = 0
-    return ReturnValue(r)
+        (SERVER_URL, accessToken))
+    def _wrap_result(result):
+        result = ReturnValue(result.json())
+        if 'template_list' in result: result['errcode'] = 0
+        return result
+    r._wrap_result = _wrap_result
+    return r
 
 @access_token
 def send(templateId, msgDict, toUserId, accessToken=None):
@@ -58,5 +75,8 @@ def send(templateId, msgDict, toUserId, accessToken=None):
     data = encode_send_dict(msgDict)
     if data is None: return ReturnValue({'errcode': -10001})
     r = requests.post('%s/cgi-bin/template/del_private_template?access_token=%s' % 
-        (SERVER_URL, accessToken), data=data).json()
-    return ReturnValue(r)
+        (SERVER_URL, accessToken), data=data)
+    def _wrap_result(result):
+        return ReturnValue(result.json())
+    r._wrap_result = _wrap_result
+    return r

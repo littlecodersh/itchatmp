@@ -1,8 +1,11 @@
 import functools, logging, time, threading
 from datetime import datetime, timedelta
 
-from ..requests import requests
+from requests.models import Response
+from requests import get
 from tornado import gen
+
+from ..requests import requests
 from itchatmp.config import COROUTINE
 from itchatmp.server import WechatServer
 from itchatmp.utils import retry
@@ -66,7 +69,7 @@ def update_access_token_producer(tokenUrl, appIdFn, forceSync=False):
         def _update_access_token():
             global __AUTO_MAINTAIN
             url = tokenUrl % (appIdFn(__server), __server.config.appSecret)
-            r = requests.get(url).json()
+            r = get(url).json()
             if 'access_token' in r:
                 __server.atStorage.store_access_token(
                     r['access_token'], int(time.time()) + r['expires_in'])
@@ -81,16 +84,19 @@ def update_access_token_producer(tokenUrl, appIdFn, forceSync=False):
             return r
         return _update_access_token
 
-def access_token_producer(tokenFn):
+def access_token_producer(tokenFn, forceSync=False):
     ''' wrapper for functions need accessToken
-     * accessToken should be a key argument of the wrapped fn
-       ..code:: python
-            @access_token
-            def fn(a, b, c, accessToken=False):
-                pass
-     * if accessToken is not successfully fetched, wrapped fn will return why
+        accessToken should be a key argument of the wrapped fn
+        ..code:: python
+             @access_token
+             def fn(a, b, c, accessToken=False):
+                 pass
+        if accessToken is not successfully fetched, wrapped fn will return why
+        There's a very tricky thing about this decorator:
+            You need to return a requests.models.Response object
+            And set _wrap_result of the object to format result
     '''
-    if COROUTINE:
+    if COROUTINE and not forceSync:
         def _access_token(fn):
             @gen.coroutine
             @functools.wraps(fn)
@@ -103,7 +109,7 @@ def access_token_producer(tokenFn):
                 kwargs['accessToken'] = accessToken
                 future = fn(*args, **kwargs)
                 r = yield future
-                if r.json().get('errcode') == 40014: # token timeout
+                if isinstance(r, Response) and r.json().get('errcode') == 40014: # token timeout
                     updateResult = yield tokenFn()
                     if not updateResult: raise gen.Return(updateResult)
                     accessToken, expireTime = __server.atStorage.get_access_token()
@@ -111,7 +117,6 @@ def access_token_producer(tokenFn):
                     future = fn(*args, **kwargs)
                     r = yield future
                 wrap_fn = getattr(future, '_wrap_result', None)
-                r = ReturnValue(r.json())
                 if wrap_fn is not None: r = wrap_fn(r)
                 raise gen.Return(r)
             return _access_token
@@ -127,14 +132,13 @@ def access_token_producer(tokenFn):
                     accessToken, expireTime = __server.atStorage.get_access_token()
                 kwargs['accessToken'] = accessToken
                 r = fn(*args, **kwargs)
-                if r.json().get('errcode') == 40014: # token timeout
+                if isinstance(r, Response) and r.json().get('errcode') == 40014: # token timeout
                     updateResult = tokenFn()
                     if not updateResult: return updateResult
                     accessToken, expireTime = __server.atStorage.get_access_token()
                     kwargs['accessToken'] = accessToken
                     r = fn(*args, **kwargs)
-                wrap_fn = getattr(future, '_wrap_result', None)
-                r = ReturnValue(r.json())
+                wrap_fn = getattr(r, '_wrap_result', None)
                 if wrap_fn is not None: r = wrap_fn(r)
                 return r
             return _access_token

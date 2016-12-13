@@ -45,22 +45,29 @@ def create_qrcode(sceneData, expire=2592000):
         data = encode_send_dict(data)
         if data is None: return ReturnValue({'errcode': -10001})
         r = requests.post('%s/cgi-bin/qrcode/create?access_token=%s'
-            % (SERVER_URL, accessToken), data=data).json()
-        if 'ticket' in r: r['errcode'] = 0
-        return ReturnValue(r)
+            % (SERVER_URL, accessToken), data=data)
+        def _wrap_result(result):
+            result = ReturnValue(result.json())
+            if 'ticket' in result: result['errcode'] = 0
+            return result
+        r._wrap_result = _wrap_result
+        return r
     return _create_qrcode(data)
 
 def download_qrcode(ticket):
     params = {'ticket': ticket}
     r = requests.get('https://mp.weixin.qq.com/cgi-bin/showqrcode',
         params=params, stream=True)
-    if 'application/json' in r.headers['Content-Type']:
-        return ReturnValue(r.json())
-    else:
-        tempStorage = io.BytesIO()
-        for block in r.iter_content(1024):
-            tempStorage.write(block)
-        return ReturnValue({'file': tempStorage, 'errcode': 0})
+    def _wrap_result(result):
+        if 'application/json' in result.headers['Content-Type']:
+            return ReturnValue(result.json())
+        else:
+            tempStorage = io.BytesIO()
+            for block in result.iter_content(1024):
+                tempStorage.write(block)
+            return ReturnValue({'file': tempStorage, 'errcode': 0})
+    r._wrap_result = _wrap_result
+    return r
 
 @access_token
 def long_url_to_short(url, accessToken=None):
@@ -68,5 +75,8 @@ def long_url_to_short(url, accessToken=None):
     data = encode_send_dict(data)
     if data is None: return ReturnValue({'errcode': -10001})
     r = requests.post('%s/cgi-bin/shorturl?access_token=%s'
-        % (SERVER_URL, accessToken), data=data).json()
-    return ReturnValue(r)
+        % (SERVER_URL, accessToken), data=data)
+    def _wrap_result(result):
+        return ReturnValue(result.json())
+    r._wrap_result = _wrap_result
+    return r

@@ -48,9 +48,13 @@ def fn_producer(fnName, maxTimeSection):
             data = {'begin_date': startTime, 'end_date': endTime}
             data = encode_send_dict(data)
             r = requests.post('%s/datacube/%s?access_token=%s' % 
-                (SERVER_URL, fnName, accessToken), data=data).json()
-            if 'list' in r: r['errcode'] = 0
-            return ReturnValue(r)
+                (SERVER_URL, fnName, accessToken), data=data)
+            def _wrap_result(result):
+                result = ReturnValue(result.json())
+                if 'list' in result: result['errcode'] = 0
+                return result
+            r._wrap_result = _wrap_result
+            return r
         return __fn_producer(startTime, endTime)
     _fn_producer.__doc__ = DOC_DICT[fnName] + \
         '\n * startTime can be timestamp or datetime.datetime' + \

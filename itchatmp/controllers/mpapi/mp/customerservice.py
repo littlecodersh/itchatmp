@@ -5,7 +5,7 @@ from .common import access_token
 from itchatmp.utils import retry, encode_send_dict
 from itchatmp.content import (
     IMAGE, VOICE, VIDEO, MUSIC, TEXT, NEWS, CARD)
-from itchatmp.config import SERVER_URL
+from itchatmp.config import SERVER_URL, COROUTINE
 from itchatmp.returnvalues import ReturnValue
 
 logger = logging.getLogger('itchatmp')
@@ -13,9 +13,13 @@ logger = logging.getLogger('itchatmp')
 @access_token
 def get(accessToken=None):
     r = requests.post('%s/cgi-bin/customservice/getkflist?access_token=%s'
-        % (SERVER_URL, accessToken)).json()
-    if 'kf_list' in r: r['errcode'] = 0
-    return ReturnValue(r)
+        % (SERVER_URL, accessToken))
+    def _wrap_result(result):
+        result = ReturnValue(result.json())
+        if 'kf_list' in result: result['errcode'] = 0
+        return result
+    r._wrap_result = _wrap_result
+    return r
 
 def add(accountDict, autoDecide=True):
     @access_token
@@ -23,9 +27,12 @@ def add(accountDict, autoDecide=True):
         data = encode_send_dict(accountDict)
         if data is None: return ReturnValue({'errcode': -10001})
         r = requests.post('%s/customservice/kfaccount/add?access_token=%s'
-            % (SERVER_URL, accessToken), data=data).json()
-        return ReturnValue(r)
-    if autoDecide:
+            % (SERVER_URL, accessToken), data=data)
+        def _wrap_result(result):
+            return ReturnValue(result.json())
+        r._wrap_result = _wrap_result
+        return r
+    if autoDecide and not COROUTINE:
         currentList = get()
         for kf in currentList.get('kf_list', []):
             if kf['kf_account'] == accountDict.get('kf_account'):
@@ -39,9 +46,12 @@ def update(accountDict, autoDecide=True):
         data = encode_send_dict(accountDict)
         if data is None: return ReturnValue({'errcode': -10001})
         r = requests.post('%s/customservice/kfaccount/add?access_token=%s'
-            % (SERVER_URL, accessToken), data=data).json()
-        return ReturnValue(r)
-    if autoDecide:
+            % (SERVER_URL, accessToken), data=data)
+        def _wrap_result(result):
+            return ReturnValue(result.json())
+        r._wrap_result = _wrap_result
+        return r
+    if autoDecide and COROUTINE:
         currentList = get()
         for kf in currentList.get('kf_list', []):
             if kf['kf_account'] == accountDict.get('kf_account'):
@@ -59,9 +69,12 @@ def delete(accountDict, autoDecide=True):
         data = encode_send_dict(accountDict)
         if data is None: return ReturnValue({'errcode': -10001})
         r = requests.post('%s/customservice/kfaccount/del?access_token=%s'
-            % (SERVER_URL, accessToken), data=data).json()
-        return ReturnValue(r)
-    if autoDecide:
+            % (SERVER_URL, accessToken), data=data)
+        def _wrap_result(result):
+            return ReturnValue(result.json())
+        r._wrap_result = _wrap_result
+        return r
+    if autoDecide and COROUTINE:
         currentList = get()
         for kf in currentList.get('kf_list', []):
             if kf['kf_account'] == accountDict.get('kf_account'):
@@ -72,14 +85,14 @@ def delete(accountDict, autoDecide=True):
 
 @access_token
 def set_head_image(openedFile, kfAccount, accessToken=None):
-    try:
-        r = requests.post('%s/customservice/kfaccount/uploadheadimg?'
-            'access_token=%s&kf_account=%s' % 
-            (SERVER_URL, accessToken, kfAccount),
-            files={'file': openedFile}).json()
-        return ReturnValue(r)
-    except Exception as e:
-        return ReturnValue({'errcode': -10001, 'errmsg': e.message})
+    r = requests.post('%s/customservice/kfaccount/uploadheadimg?'
+        'access_token=%s&kf_account=%s' % 
+        (SERVER_URL, accessToken, kfAccount),
+        files={'file': openedFile})
+    def _wrap_result(result):
+        return ReturnValue(result.json())
+    r._wrap_result = _wrap_result
+    return r
 
 @access_token
 def send(msgType, mediaId, additionalDict={}, toUserId='', accessToken=None):
@@ -88,12 +101,12 @@ def send(msgType, mediaId, additionalDict={}, toUserId='', accessToken=None):
     msgDict['touser'] = toUserId
     data = encode_send_dict(msgDict)
     if data is None: return ReturnValue({'errcode': -10001})
-    try:
-        r = requests.post('%s/cgi-bin/message/custom/send?access_token=%s'
-            % (SERVER_URL, accessToken), data=data).json()
-        return ReturnValue(r)
-    except Exception as e:
-        return ReturnValue({'errcode': -10001, 'errmsg': e.message})
+    r = requests.post('%s/cgi-bin/message/custom/send?access_token=%s'
+        % (SERVER_URL, accessToken), data=data)
+    def _wrap_result(result):
+        return ReturnValue(result.json())
+    r._wrap_result = _wrap_result
+    return r
 
 def __form_send_dict(msgType, mediaId, additionalDict):
     if not msgType in (IMAGE, VOICE, VIDEO, TEXT, NEWS, CARD, MUSIC):

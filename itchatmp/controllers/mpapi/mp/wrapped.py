@@ -1,9 +1,12 @@
 import re, logging
 
-from itchatmp.views import reply_msg_format
-from itchatmp.returnvalues import ReturnValue
+from tornado import gen
+
+from itchatmp.config import COROUTINE
 from itchatmp.content import (MUSIC,
     IMAGE, VOICE, VIDEO, THUMB, TEXT, NEWS, CARD)
+from itchatmp.returnvalues import ReturnValue
+from itchatmp.views import reply_msg_format
 from .customerservice import send as cssend
 from .messages import preview, upload
 
@@ -45,17 +48,38 @@ def send(msg, toUserId, mediaId=None):
             'msg for type MUSIC should be: {"msgType": MUSIC, ' + 
             '"musicurl" :MUSICURL, "hqmusicurl" :HQMUSICURL, ' +
             '"thumb_media_id": MEDIA_ID}'})
-    # deal with mediaId and fileDir
-    if mediaId is not None and msgType != TEXT:
-        content = mediaId
-    elif 'FileDir' in msg:
-        r = upload(msgType, msg['FileDir'])
-        if not r: return r
-        content = r['media_id']
-    r = cssend(msgType, content, additionalDict=msg, toUserId=toUserId)
-    r['preview'] = False
-    if not r:
-        if r['errcode'] != 45015 or msgType == MUSIC: return r
-        r = preview(msgType, content, additionalDict=msg, toUserId=toUserId)
-        r['preview'] = True
-    return r
+    if COROUTINE:
+        @gen.coroutine
+        def _send():
+            # deal with mediaId and fileDir
+            if mediaId is not None and msgType != TEXT:
+                c = mediaId
+            elif 'FileDir' in msg:
+                r = yield upload(msgType, msg['FileDir'])
+                if not r: raise gen.Return(r)
+                c = r['media_id']
+            else:
+                c = content
+            r = yield cssend(msgType, c, additionalDict=msg, toUserId=toUserId)
+            r['preview'] = False
+            if not r:
+                if r['errcode'] != 45015 or msgType == MUSIC: raise gen.Return(r)
+                r = yield preview(msgType, content, additionalDict=msg, toUserId=toUserId)
+                r['preview'] = True
+            raise gen.Return(r)
+        return _send()
+    else:
+        # deal with mediaId and fileDir
+        if mediaId is not None and msgType != TEXT:
+            content = mediaId
+        elif 'FileDir' in msg:
+            r = upload(msgType, msg['FileDir'])
+            if not r: return r
+            content = r['media_id']
+        r = cssend(msgType, content, additionalDict=msg, toUserId=toUserId)
+        r['preview'] = False
+        if not r:
+            if r['errcode'] != 45015 or msgType == MUSIC: return r
+            r = preview(msgType, content, additionalDict=msg, toUserId=toUserId)
+            r['preview'] = True
+        return r
