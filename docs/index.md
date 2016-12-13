@@ -4,7 +4,9 @@
 
 itchatmp是一个开源的微信公众号接口，使用python调用微信公众号从未如此简单。
 
-itchatmp基于tornado框架，满足效率需求。支持普通使用、nginx反向代理与wsgi。
+基于tornado框架，满足效率需求。支持普通使用、nginx反向代理与wsgi。
+
+同样的命令，支持同步与协程调用，适合各层次开发者使用。
 
 ## Installation
 
@@ -47,7 +49,48 @@ itchatmp.run()
 
 ## Advanced uses
 
-Building
+### 协程使用
+
+如果你需要使用协程版本的itchatmp，你需要另外安装一个组件：
+
+```python
+pip install itchatmphttp
+```
+
+这样，你的itchatmp就变成协程版本了。同样，删除以后就变回了线程池版本。
+
+例如回复信息的操作，协程也只需要这样写：
+
+```python
+from tornado import gen
+import itchatmp
+
+itchatmp.update_config(itchatmp.WechatConfig(
+    token='yourToken',
+    appId = 'yourAppId',
+    appSecret = 'yourAppSecret'))
+
+@itchatmp.msg_register(itchatmp.content.TEXT)
+def text_reply(msg):
+    yield gen.sleep(3)
+    r = yield itchatmp.send('First message', msg['FromUserName'])
+    yield gen.sleep(3)
+    r = yield itchatmp.send('Second message', msg['FromUserName'])
+
+itchatmp.run()
+```
+
+itchatmp里面所有的方法都变成了协程方法，如果你不熟悉协程**建议不要使用**，线程池也足够满足普通需求。
+
+### WSGI使用
+
+如果你需要生成一个能够在类似SAE的平台上包装的应用，你可以这样生成：
+
+```python
+app = itchatmp.run(isWsgi=True)
+```
+
+如果你还是无法配置，请阅读文档一栏的[部署][document-deploy]部分。
 
 ## Comments
 
@@ -61,4 +104,5 @@ Building
 [document]: https://itchat.readthedocs.org/zh/latest/
 [robot-qr]: http://7xrip4.com1.z0.glb.clouddn.com/MyPlatform%2F%E6%BC%94%E7%A4%BA%E4%BA%8C%E7%BB%B4%E7%A0%81.jpg?imageView/2/w/200/
 [demo]: http://7xrip4.com1.z0.glb.clouddn.com/MyPlatform%2F%E5%85%AC%E4%BC%97%E5%8F%B7%E6%BC%94%E7%A4%BA.png?imageView/2/w/200/
+[document-deploy]: http://itchatmp.readthedocs.io/zh_CN/latest/other/deploy/
 [issue#1]: https://github.com/littlecodersh/itchatmp/issues/1

@@ -42,7 +42,7 @@ def get_server_ip_producer(forceSync=False):
             return result
         r._wrap_result = _wrap_result
         return r
-    return _get_server_ip()
+    return _get_server_ip
 
 get_server_ip = get_server_ip_producer()
 

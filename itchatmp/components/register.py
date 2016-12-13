@@ -3,11 +3,12 @@ import threading, logging
 import traceback
 
 import tornado
+from tornado import gen
 from tornado.web import RequestHandler
 from tornado.wsgi import WSGIAdapter
 from concurrent.futures import ThreadPoolExecutor
 
-from itchatmp.config import SERVER_WAIT_TIME
+from itchatmp.config import SERVER_WAIT_TIME, COROUTINE
 from itchatmp.content import (NORMAL, COMPATIBLE, SAFE,
     TEXT, INCOME_MSG, OUTCOME_MSG)
 from itchatmp.views import (
@@ -36,7 +37,7 @@ def construct_get_post_fn(core):
             return 'Greeting from itchatmp!'
         else:
             return verify_echostr(core, handler) or 'Greeting from itchatmp!'
-    def post_fn(handler):
+    def sync_post_fn(handler):
         if core.filterRequest and not core.filter_request(handler.request):
             logger.debug('A request from unknown ip is filtered')
             return None, None
@@ -49,14 +50,38 @@ def construct_get_post_fn(core):
             if not msgDict:
                 logger.debug('Ignore a request because verify failed')
             else:
+                reply_fn = get_reply_fn(core, msgDict['MsgType'])
+                if reply_fn is None: return None
                 try:
-                    reply = get_reply_fn(core, msgDict['MsgType'])(copy.deepcopy(msgDict))
+                    reply = reply_fn(copy.deepcopy(msgDict))
                 except Exception as e:
                     logger.debug(traceback.format_exc())
                 else: # if nothing goes wrong
                     if reply: return verify_reply(core, reply, msgDict, isActualEncrypt)
         return None, None
-    return get_fn, post_fn
+    @gen.coroutine
+    def coroutine_post_fn(handler):
+        if core.filterRequest and not core.filter_request(handler.request):
+            logger.debug('A request from unknown ip is filtered')
+        else:
+            msgDict = deconstruct_msg(
+                handler.request.body.decode('utf8', 'replace'))
+            # please warn me if decode with replace will cause exception
+            isActualEncrypt = 'Encrypt' in msgDict
+            msgDict = verify_message(core, handler, msgDict)
+            if not msgDict:
+                logger.debug('Ignore a request because verify failed')
+            else:
+                reply_fn = get_reply_fn(core, msgDict['MsgType'])
+                if reply_fn is None: raise gen.Return((None, None))
+                try:
+                    reply = yield reply_fn(copy.deepcopy(msgDict))
+                except Exception as e:
+                    logger.debug(traceback.format_exc())
+                else: # if nothing goes wrong
+                    if reply: raise gen.Return(verify_reply(core, reply, msgDict, isActualEncrypt))
+        raise gen.Return((None, None))
+    return get_fn, coroutine_post_fn if COROUTINE else sync_post_fn
 
 def verify_echostr(core, handler):
     '''
@@ -145,24 +170,43 @@ def construct_handler(core, isWsgi):
                     closed = True
                     self.finish(r)
     else:
-        threadPool = ThreadPoolExecutor(core.threadPoolNumber)
         ioLoop = core.ioLoop
-        class MainHandler(RequestHandler):
-            def get(self):
-                self.finish(get_fn(self))
-            @tornado.gen.coroutine
-            def post(self):
-                timeoutHandler = ioLoop.call_later(SERVER_WAIT_TIME,
-                    lambda: self.finish())
-                r, rawReply = yield threadPool.submit(post_fn, self)
-                ioLoop.remove_timeout(timeoutHandler)
-                if time.time() < timeoutHandler.deadline:
-                    self.finish(r)
-                else:
-                    if rawReply:
-                        r = core.send(rawReply, rawReply.get('ToUserName', ''))
-                        if not r:
-                            logger.debug('Reply error: %s' % r.get('errmsg', ''))
+        if COROUTINE:
+            class MainHandler(RequestHandler):
+                def get(self):
+                    self.finish(get_fn(self))
+                @tornado.gen.coroutine
+                def post(self):
+                    timeoutHandler = ioLoop.call_later(SERVER_WAIT_TIME,
+                        lambda: self.finish())
+                    r, rawReply = yield post_fn(self)
+                    ioLoop.remove_timeout(timeoutHandler)
+                    if time.time() < timeoutHandler.deadline:
+                        self.finish(r)
+                    else:
+                        if rawReply:
+                            r = yield core.send(rawReply, rawReply.get('ToUserName', ''))
+                            if not r:
+                                logger.debug('Reply error: %s' % r.get('errmsg', ''))
+        else:
+            threadPool = ThreadPoolExecutor(core.threadPoolNumber)
+            class MainHandler(RequestHandler):
+                def get(self):
+                    self.finish(get_fn(self))
+                @tornado.gen.coroutine
+                def post(self):
+                    timeoutHandler = ioLoop.call_later(SERVER_WAIT_TIME,
+                        lambda: self.finish())
+                    r, rawReply = yield threadPool.submit(post_fn, self)
+                    ioLoop.remove_timeout(timeoutHandler)
+                    if time.time() < timeoutHandler.deadline:
+                        self.finish(r)
+                    else:
+                        if rawReply:
+                            r = yield threadPool.submit(core.send,
+                                (rawReply, rawReply.get('ToUserName', '')))
+                            if not r:
+                                logger.debug('Reply error: %s' % r.get('errmsg', ''))
     return MainHandler
 
 def update_config(self, config=None, atStorage=None, userStorage=None,
@@ -199,6 +243,7 @@ def msg_register(self, msgType):
      * register twice will override the older one
     '''
     def _msg_register(fn):
+        if COROUTINE: fn = gen.coroutine(fn)
         msgTypeList = msgType if isinstance(msgType, list) else [msgType]
         for t in msgTypeList:
             if t in INCOME_MSG:
@@ -210,4 +255,4 @@ def msg_register(self, msgType):
     return _msg_register
 
 def get_reply_fn(core, msgType):
-    return core._replyFnDict.get(msgType, lambda x: None)
+    return core._replyFnDict.get(msgType)

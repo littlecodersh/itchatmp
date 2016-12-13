@@ -1,9 +1,10 @@
 import logging, io
 
+from tornado import gen
 from ..requests import requests
 from .common import access_token
 from itchatmp.utils import retry, encode_send_dict
-from itchatmp.config import SERVER_URL
+from itchatmp.config import SERVER_URL, COROUTINE
 from itchatmp.returnvalues import ReturnValue
 
 logger = logging.getLogger('itchatmp')
@@ -55,19 +56,34 @@ def create_qrcode(sceneData, expire=2592000):
     return _create_qrcode(data)
 
 def download_qrcode(ticket):
-    params = {'ticket': ticket}
-    r = requests.get('https://mp.weixin.qq.com/cgi-bin/showqrcode',
-        params=params, stream=True)
-    def _wrap_result(result):
-        if 'application/json' in result.headers['Content-Type']:
-            return ReturnValue(result.json())
-        else:
-            tempStorage = io.BytesIO()
-            for block in result.iter_content(1024):
-                tempStorage.write(block)
-            return ReturnValue({'file': tempStorage, 'errcode': 0})
-    r._wrap_result = _wrap_result
-    return r
+    if COROUTINE:
+        @gen.coroutine
+        def _download_qrcode(ticket):
+            params = {'ticket': ticket}
+            r = yield requests.get('https://mp.weixin.qq.com/cgi-bin/showqrcode',
+                params=params, stream=True)
+            if 'application/json' in r.headers['Content-Type']:
+                r = ReturnValue(r.json())
+            else:
+                tempStorage = io.BytesIO()
+                for block in r.iter_content(1024):
+                    tempStorage.write(block)
+                r = ReturnValue({'file': tempStorage, 'errcode': 0})
+            raise gen.Return(r)
+    else:
+        def _download_qrcode(ticket):
+            params = {'ticket': ticket}
+            r = requests.get('https://mp.weixin.qq.com/cgi-bin/showqrcode',
+                params=params, stream=True)
+            if 'application/json' in r.headers['Content-Type']:
+                r = ReturnValue(r.json())
+            else:
+                tempStorage = io.BytesIO()
+                for block in r.iter_content(1024):
+                    tempStorage.write(block)
+                r = ReturnValue({'file': tempStorage, 'errcode': 0})
+            return
+    return _download_qrcode
 
 @access_token
 def long_url_to_short(url, accessToken=None):

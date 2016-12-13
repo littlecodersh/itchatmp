@@ -82,7 +82,7 @@ itchatmp.run()
 
 运行一下说句话吧。
 
-更多关于itchatmp的内容，欢迎你继续阅读！
+更多关于itchatmp的内容，欢迎你继续阅读进阶篇的内容！
 
 [environment.md]: http://itchatmp.readthedocs.io/zh_CN/latest/intro/environment/
 [userid-website]: http://7xrip4.com1.z0.glb.clouddn.com/itchatmp/docs/userid-website.png

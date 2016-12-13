@@ -1,11 +1,11 @@
-import json
-
-from tornado.httpclient import AsyncHTTPClient
-from tornado.gen import coroutine, Return
+from itchatmp.config import COROUTINE
 
 # if you have itchatmphttp installed
 # we will use coroutine requests instead
-try:
-    from itchatmphttp import requests
-except ImportError:
+if COROUTINE:
+    try:
+        from itchatmphttp import requests
+    except ImportError:
+        raise ImportError('You must installed itchatmphttp to use coroutine features')
+else:
     import requests
