@@ -9,3 +9,6 @@ if COROUTINE:
         raise ImportError('You must installed itchatmphttp to use coroutine features')
 else:
     import requests
+    requests.packages.urllib3.disable_warnings()
+    requests = requests.session()
+    requests.verify = False

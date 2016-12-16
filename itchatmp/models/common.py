@@ -1,4 +1,4 @@
-import pickle, logging
+import pickle, logging, sys
 
 logger = logging.getLogger('itchatmp')
 
@@ -19,7 +19,6 @@ class TestStorage(AccessTokenStorage):
             'serverList': ([], 0),
         }
     '''
-    __storageDict = None
     def __init__(self):
         try:
             with open('storage.pkl', 'rb') as f:
@@ -44,4 +43,27 @@ class TestStorage(AccessTokenStorage):
     def store_server_list(self, serverList, fetchTime):
         self.__storageDict['serverList'] = (serverList, fetchTime)
         self.__store_locally()
+        logger.debug('Server list updated')
+
+class MemCacheStorage(AccessTokenStorage):
+    ''' storage for memcache
+        'accessToken': ('', 0),
+        'serverList': ([], 0),
+    '''
+    def __init__(self):
+        try:
+            import pylibmc
+        except ImportError:
+            logger.info('pylibmc is not installed')
+            sys.exit()
+        self.__storage = pylibmc.Client()
+    def get_access_token(self):
+        return self.__storage.get('accessToken') or ('', 0)
+    def store_access_token(self, accessToken, expireTime):
+        self.__storage.set('accessToken', (accessToken, expireTime))
+        logger.debug('Access token updated')
+    def get_server_list(self):
+        return self.__storage.get('serverList') or ([], 0)
+    def store_server_list(self, serverList, fetchTime):
+        self.__storage.set('serverList', (serverList, fetchTime))
         logger.debug('Server list updated')

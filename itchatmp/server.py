@@ -55,7 +55,10 @@ class WechatServer(object):
         self.filterRequest = filterRequest
         self.threadPoolNumber = threadPoolNumber or ((None
             if not hasattr(os, 'cpu_count') else os.cpu_count()) or 1) * 5
-        self.ioLoop = tornado.ioloop.IOLoop.current()
+        try:
+            self.ioLoop = tornado.ioloop.IOLoop.current()
+        except:
+            self.ioLoop = None
         self.isWsgi = True
         self.debug = True
         self._replyFnDict = {}
@@ -65,7 +68,7 @@ class WechatServer(object):
             it is defined in components/register
         '''
         raise NotImplementedError()
-    def run(self, isWsgi=False, debug=True):
+    def run(self, isWsgi=False, debug=True, port=80):
         '''
             it is defined in components/register
         '''

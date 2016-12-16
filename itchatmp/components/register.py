@@ -149,25 +149,29 @@ def verify_reply(core, reply, msgDict, isActualEncrypt):
 def construct_handler(core, isWsgi):
     get_fn, post_fn = construct_get_post_fn(core)
     if isWsgi:
-        def _timer_thread(handler):
-            time.sleep(SERVER_WAIT_TIME)
-            if not closed: handler.finish()
         class MainHandler(RequestHandler):
             def get(self):
                 self.finish(get_fn(self))
             def post(self):
-                closed = False
-                timeThread = threading.Thread(target=_timer_thread, args=(core,))
+                self.closed = False
+                def _timer_thread(handler):
+                    stopTime = time.time() + SERVER_WAIT_TIME
+                    while not handler.closed and time.time() < stopTime:
+                        time.sleep(SERVER_WAIT_TIME / 100)
+                    if not handler.closed:
+                        handler.finish()
+                        handler.closed = True
+                timeThread = threading.Thread(target=_timer_thread, args=(self,))
                 timeThread.setDaemon = True
                 timeThread.start()
                 r, rawReply = post_fn(self)
-                if closed: # server has stopped waiting
+                if self.closed: # server has stopped waiting
                     if rawReply:
                         r = core.send(rawReply, rawReply.get('ToUserName', ''))
                         if not r:
                             logger.debug('Reply error: %s' % r.get('errmsg', ''))
                 else:
-                    closed = True
+                    self.closed = True
                     self.finish(r)
     else:
         ioLoop = core.ioLoop
@@ -217,7 +221,7 @@ def update_config(self, config=None, atStorage=None, userStorage=None,
     self.filterRequest = filterRequest or self.filterRequest
     self.threadPoolNumber = threadPoolNumber or self.threadPoolNumber
 
-def run(self, isWsgi=False, debug=True):
+def run(self, isWsgi=False, debug=True, port=80):
     self.isWsgi = isWsgi
     self.debug = debug
     if debug: set_logging(loggingLevel=logging.DEBUG)
@@ -229,8 +233,9 @@ def run(self, isWsgi=False, debug=True):
     if isWsgi:
         return WSGIAdapter(app)
     else:
-        env_test()
-        app.listen(80)
+        port = int(port)
+        env_test(port)
+        app.listen(port)
         try:
             self.ioLoop.start()
         except:

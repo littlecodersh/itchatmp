@@ -2,13 +2,13 @@
 
 ![py27][py27] ![py35][py35] [English version][english-version]
 
-itchatmp是一个开源的微信公众号接口，使用python调用微信公众号从未如此简单。
+itchatmp是一个开源的微信公众号、企业号接口，使用python调用微信公众号从未如此简单。
 
 基于tornado框架，满足效率需求。支持普通使用、nginx反向代理与wsgi。
 
 同样的命令，支持同步与协程调用，适合各层次开发者使用。
 
-## Installation
+## 安装
 
 可以通过本命令安装itchatmp：
 
@@ -16,7 +16,7 @@ itchatmp是一个开源的微信公众号接口，使用python调用微信公众
 pip install itchatmp
 ```
 
-## Simple uses
+## 快速入门
 
 有了itchatmp，如果你想要回复发给自己的文本消息，只需要这样：
 
@@ -37,17 +37,25 @@ itchatmp.run()
 
 一些进阶应用可以在Advanced uses中看到，或者你也可以阅览[文档][document]。
 
-## Have a try
+## 演示机器人
 
 这是一个基于这一项目的开源小机器人，百闻不如一见，有兴趣可以尝试一下。
 
 ![QRCode][robot-qr]
 
-## Screenshots
+## 截屏
 
 ![demo][demo]
 
-## Advanced uses
+## 进阶使用
+
+### 企业号配置
+
+在配置时设置copId而非appId即可。
+
+另，由于企业号没有明文模式，所以必须将加密模式设置为安全。
+
+具体的设置可以看[这里][document-enterprise]。
 
 ### 协程使用
 
@@ -84,6 +92,8 @@ itchatmp.run()
 
 itchatmp里面所有的方法都变成了协程方法，如果你不熟悉协程**建议不要使用**，线程池也足够满足普通需求。
 
+如果你问出类似为什么`time.sleep`阻塞了协程的问题，我会很困扰的。
+
 ### WSGI使用
 
 如果你需要生成一个能够在类似SAE的平台上包装的应用，你可以这样生成：
@@ -94,7 +104,7 @@ app = itchatmp.run(isWsgi=True)
 
 如果你还是无法配置，请阅读文档一栏的[部署][document-deploy]部分。
 
-## Comments
+## 意见与建议
 
 如果有什么问题或者建议都可以在这个[Issue][issue#1]和我讨论
 
@@ -104,6 +114,7 @@ app = itchatmp.run(isWsgi=True)
 [py35]: https://img.shields.io/badge/python-3.5-red.svg
 [english-version]: https://github.com/littlecodersh/itchatmp/blob/master/README_EN.md
 [document]: http://itchatmp.readthedocs.io/zh_CN/latest/
+[document-enterprise]: http://itchatmp.readthedocs.io/zh_CN/latest/intro/enterprise/
 [robot-qr]: http://7xrip4.com1.z0.glb.clouddn.com/MyPlatform%2F%E6%BC%94%E7%A4%BA%E4%BA%8C%E7%BB%B4%E7%A0%81.jpg?imageView/2/w/200/
 [demo]: http://7xrip4.com1.z0.glb.clouddn.com/MyPlatform%2F%E5%85%AC%E4%BC%97%E5%8F%B7%E6%BC%94%E7%A4%BA.png?imageView/2/w/200/
 [document-deploy]: http://itchatmp.readthedocs.io/zh_CN/latest/other/deploy/

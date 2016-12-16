@@ -2,7 +2,7 @@ import functools, logging, time, threading
 from datetime import datetime, timedelta
 
 from requests.models import Response
-from requests import get
+from requests.sessions import session
 from tornado import gen
 
 from ..requests import requests
@@ -18,6 +18,9 @@ logger = logging.getLogger('itchatmp')
 __server = WechatServer(None, None, None)
 __AUTO_MAINTAIN = False
 __serverList = None
+__session = session()
+__session.verify = False
+get = __session.get
 
 def auto_maintain_thread(firstCallResult=None, tokenUrl=None, appIdFn=None):
     r = firstCallResult or update_access_token_producer(tokenUrl, appIdFn, True)()
