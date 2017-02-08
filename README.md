@@ -4,9 +4,11 @@
 
 itchatmp是一个开源的微信公众号、企业号接口，使用python调用微信公众号从未如此简单。
 
-基于tornado框架，满足效率需求。支持普通使用、nginx反向代理与wsgi。
+基于tornado框架，轻松满足效率需求。支持普通使用、nginx反向代理与wsgi。
 
 同样的命令，支持同步与协程调用，适合各层次开发者使用。
+
+与个人号接口[itchat][itchat]共享类似的操作方式，学习一次掌握两个工具。
 
 ## 安装
 
@@ -113,6 +115,7 @@ app = itchatmp.run(isWsgi=True)
 [py27]: https://img.shields.io/badge/python-2.7-ff69b4.svg
 [py35]: https://img.shields.io/badge/python-3.5-red.svg
 [english-version]: https://github.com/littlecodersh/itchatmp/blob/master/README_EN.md
+[itchat]: https://github.com/littlecodersh/itchat
 [document]: http://itchatmp.readthedocs.io/zh_CN/latest/
 [document-enterprise]: http://itchatmp.readthedocs.io/zh_CN/latest/intro/enterprise/
 [robot-qr]: http://7xrip4.com1.z0.glb.clouddn.com/MyPlatform%2F%E6%BC%94%E7%A4%BA%E4%BA%8C%E7%BB%B4%E7%A0%81.jpg?imageView/2/w/200/
