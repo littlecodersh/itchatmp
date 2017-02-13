@@ -42,11 +42,10 @@ def construct_get_post_fn(core):
             logger.debug('A request from unknown ip is filtered')
             return None, None
         else:
-            msgDict = deconstruct_msg(
-                handler.request.body.decode('utf8', 'replace'))
-            # please warn me if decode with replace will cause exception
+            msgDict = deconstruct_msg(handler.request.body)
             isActualEncrypt = 'Encrypt' in msgDict
-            msgDict = verify_message(core, handler, msgDict)
+            tns = get_tns(core, handler)
+            msgDict = verify_message(core, handler, tns, msgDict)
             if not msgDict:
                 logger.debug('Ignore a request because verify failed')
             else:
@@ -55,66 +54,71 @@ def construct_get_post_fn(core):
                 try:
                     reply = reply_fn(copy.deepcopy(msgDict))
                 except Exception as e:
-                    logger.debug(traceback.format_exc())
+                    logger.warning(traceback.format_exc())
                 else: # if nothing goes wrong
-                    if reply: return verify_reply(core, reply, msgDict, isActualEncrypt)
+                    if reply:
+                        return verify_reply(core, tns, reply, msgDict, isActualEncrypt)
         return None, None
     @gen.coroutine
     def coroutine_post_fn(handler):
         if core.filterRequest and not core.filter_request(handler.request):
             logger.debug('A request from unknown ip is filtered')
         else:
-            msgDict = deconstruct_msg(
-                handler.request.body.decode('utf8', 'replace'))
-            # please warn me if decode with replace will cause exception
+            msgDict = deconstruct_msg(handler.request.body)
+            tns = get_tns(core, handler)
             isActualEncrypt = 'Encrypt' in msgDict
-            msgDict = verify_message(core, handler, msgDict)
+            msgDict = verify_message(core, handler, tns, msgDict)
             if not msgDict:
                 logger.debug('Ignore a request because verify failed')
             else:
                 reply_fn = get_reply_fn(core, msgDict['MsgType'])
-                if reply_fn is None: raise gen.Return((None, None))
+                if reply_fn is None:
+                    raise gen.Return((None, None))
                 try:
                     reply = yield reply_fn(copy.deepcopy(msgDict))
                 except Exception as e:
-                    logger.debug(traceback.format_exc())
+                    logger.warning(traceback.format_exc())
                 else: # if nothing goes wrong
-                    if reply: raise gen.Return(verify_reply(core, reply, msgDict, isActualEncrypt))
+                    if reply:
+                        raise gen.Return(verify_reply(core, tns, reply, msgDict, isActualEncrypt))
         raise gen.Return((None, None))
     return get_fn, coroutine_post_fn if COROUTINE else sync_post_fn
+
+def get_tns(core, handler):
+    if handler.get_argument('msg_signature', ''):
+        tns = [handler.get_argument(key, '') for
+            key in ('timestamp', 'nonce', 'msg_signature')]
+    else:
+        tns = [handler.get_argument(key, '') for
+            key in ('timestamp', 'nonce', 'signature')]
+    return tns
 
 def verify_echostr(core, handler):
     '''
         verify signature and return echostr if valid
         if not, None will be returned
     '''
+    tns = get_tns(core, handler)
     echostr = handler.get_argument('echostr', '')
     if handler.get_argument('msg_signature', ''):
-        tns = [handler.get_argument(key, '') for
-            key in ('timestamp', 'nonce', 'msg_signature')]
         if oauth(*(tns + [echostr, core.config.token])):
-            echostr = decrypt_msg(*(tns + [core.config, {'echostr': echostr}]))
-            echostr = echostr.get('echostr')
+            msgDict = decrypt_msg(*(tns + [core.config, {'echostr': echostr}]))
+            echostr = msgDict.get('echostr')
     else:
-        valid = oauth(*([handler.get_argument(key, '') for
-            key in ('timestamp', 'nonce', 'signature')]
-            + [core.config.token]))
-        if not valid: echostr = None
+        valid = oauth(*(tns + [core.config.token]))
+        if not valid:
+            echostr = None
     return echostr
 
-def verify_message(core, handler, msgDict):
+def verify_message(core, handler, tns, msgDict):
     '''
         verify signature and return decrypted message if valid
         if not, None will be returned
     '''
     if handler.get_argument('msg_signature', ''):
-        tns = [handler.get_argument(key, '') for
-            key in ('timestamp', 'nonce', 'msg_signature')]
         valid = oauth(*(tns +
             [core.config.token, msgDict.get('Encrypt', '')]))
     else:
-        tns = [handler.get_argument(key, '') for
-            key in ('timestamp', 'nonce', 'signature')]
         valid = oauth(*(tns + [core.config.token]))
     if valid:
         if core.config.encryptMode == SAFE:
@@ -123,7 +127,7 @@ def verify_message(core, handler, msgDict):
         msgDict = {}
     return msgDict
 
-def verify_reply(core, reply, msgDict, isActualEncrypt):
+def verify_reply(core, tns, reply, msgDict, isActualEncrypt):
     reply = reply_msg_format(reply)
     if reply:
         if reply.get('MsgType') in OUTCOME_MSG:
@@ -132,7 +136,7 @@ def verify_reply(core, reply, msgDict, isActualEncrypt):
             if 'FileDir' in reply and reply['MsgType'] != TEXT:
                 r = core.upload(reply['MsgType'], reply['FileDir'])
                 if not r:
-                    logger.debug(r); return None, None
+                    logger.warning(r); return None, None
                 else:
                     reply['MediaId'] = r['media_id']
             if core.config.encryptMode == SAFE and isActualEncrypt:
@@ -141,9 +145,9 @@ def verify_reply(core, reply, msgDict, isActualEncrypt):
             else:
                 return construct_msg(reply), reply
         else:
-            logger.debug('Reply is invalid: unknown MsgType')
+            logger.warning('Reply is invalid: unknown MsgType')
     else:
-        logger.debug('Reply is invalid: %s' % reply.get('errmsg'))
+        logger.warning('Reply is invalid: %s' % reply.get('errmsg'))
     return None, None
 
 def construct_handler(core, isWsgi):
@@ -169,7 +173,7 @@ def construct_handler(core, isWsgi):
                     if rawReply:
                         r = core.send(rawReply, rawReply.get('ToUserName', ''))
                         if not r:
-                            logger.debug('Reply error: %s' % r.get('errmsg', ''))
+                            logger.warning('Reply error: %s' % r.get('errmsg', ''))
                 else:
                     self.closed = True
                     self.finish(r)
@@ -191,7 +195,7 @@ def construct_handler(core, isWsgi):
                         if rawReply:
                             r = yield core.send(rawReply, rawReply.get('ToUserName', ''))
                             if not r:
-                                logger.debug('Reply error: %s' % r.get('errmsg', ''))
+                                logger.warning('Reply error: %s' % r.get('errmsg', ''))
         else:
             threadPool = ThreadPoolExecutor(core.threadPoolNumber)
             class MainHandler(RequestHandler):
@@ -210,7 +214,7 @@ def construct_handler(core, isWsgi):
                             r = yield threadPool.submit(core.send,
                                 (rawReply, rawReply.get('ToUserName', '')))
                             if not r:
-                                logger.debug('Reply error: %s' % r.get('errmsg', ''))
+                                logger.warning('Reply error: %s' % r.get('errmsg', ''))
     return MainHandler
 
 def update_config(self, config=None, atStorage=None, userStorage=None,

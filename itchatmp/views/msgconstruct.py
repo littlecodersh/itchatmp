@@ -28,8 +28,8 @@ def deconstruct_msg(msg):
                 d[i.tag] = i.text
     try:
         _get_dict(ET.fromstring(msg), r)
-    except Exception as e:
-        logger.debug(e.message)
+    except:
+        logger.debug(traceback.format_exc())
     if 'Encrypt' in r:
         r['MsgType'] = r.get('MsgType') or ENCRYPT
     return r
