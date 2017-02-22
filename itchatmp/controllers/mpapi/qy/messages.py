@@ -40,7 +40,7 @@ from ..requests import requests
 from .common import access_token
 from itchatmp.utils import retry, encode_send_dict
 from itchatmp.config import COMPANY_URL
-from itchatmp.content import (
+from itchatmp.content import (FILE,
     IMAGE, VOICE, VIDEO, THUMB, TEXT, NEWS, CARD)
 from itchatmp.returnvalues import ReturnValue
 
@@ -51,11 +51,12 @@ def send_some(msgType, mediaId, additionalDict={},
         targetIdList=[], partyIdList=[], tagIdList=[],
         agentId=None, accessToken=None):
     msgDict = __form_send_dict(msgType, mediaId, additionalDict)
-    if not msgDict: return msgDict
-    if not (targetIdList or partyIdList or tagIdList):
+    if not msgDict:
+        return msgDict
+    elif not (targetIdList or partyIdList or tagIdList):
         return ReturnValue({'errcode': 40130, 'errmsg':
             'there must be one filled list'})
-    if agentId is None: 
+    elif agentId is None: 
         return ReturnValue({'errcode': -10003, 'errmsg':
             'agentId must be set'})
     msgDict['touser']  = '|'.join(targetIdList)
@@ -70,9 +71,14 @@ def send_some(msgType, mediaId, additionalDict={},
     return ReturnValue(r)
 
 @access_token
-def send_all(msgType, mediaId, additionalDict={}, tagId=None, accessToken=None):
+def send_all(msgType, mediaId, additionalDict={}, tagId=None,
+        agentId=None, accessToken=None):
     msgDict = __form_send_dict(msgType, mediaId, additionalDict)
-    if not msgDict: return msgDict
+    if not msgDict:
+        return msgDict
+    elif agentId is None: 
+        return ReturnValue({'errcode': -10003, 'errmsg':
+            'agentId must be set'})
     msgDict['touser']  = '@all'
     msgDict['toparty'] = '@all'
     msgDict['totag']   = '@all'

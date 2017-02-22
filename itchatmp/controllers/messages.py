@@ -12,9 +12,10 @@ def send_some(msgType, mediaId, additionalDict={},
         msgTyp, mediaId, additionalDict,
         targetIdList, partyIdList, tagIdList, agentId)
 
-def send_all(msgType, mediaId, additionalDict={}, tagId=None):
+def send_all(msgType, mediaId, additionalDict={},
+        tagId=None, agentId=None):
     return determine_wrapper(mpMsg.send_all, qyMsg.send_all,
-        msgType, mediaId, additionalDict, tagId)
+        msgType, mediaId, additionalDict, tagId, agentId)
 
 def preview(msgType, mediaId, additionalDict={}, toUserId=None, toWxAccount=None):
     return determine_wrapper(mpMsg.preview, None,

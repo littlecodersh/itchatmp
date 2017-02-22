@@ -50,7 +50,8 @@ def construct_get_post_fn(core):
                 logger.debug('Ignore a request because verify failed')
             else:
                 reply_fn = get_reply_fn(core, msgDict['MsgType'])
-                if reply_fn is None: return None
+                if reply_fn is None:
+                    return None
                 try:
                     reply = reply_fn(copy.deepcopy(msgDict))
                 except Exception as e:
@@ -80,7 +81,8 @@ def construct_get_post_fn(core):
                     logger.warning(traceback.format_exc())
                 else: # if nothing goes wrong
                     if reply:
-                        raise gen.Return(verify_reply(core, tns, reply, msgDict, isActualEncrypt))
+                        r = yield verify_reply(core, tns, reply, msgDict, isActualEncrypt)
+                        raise gen.Return(r)
         raise gen.Return((None, None))
     return get_fn, coroutine_post_fn if COROUTINE else sync_post_fn
 
@@ -127,28 +129,54 @@ def verify_message(core, handler, tns, msgDict):
         msgDict = {}
     return msgDict
 
-def verify_reply(core, tns, reply, msgDict, isActualEncrypt):
-    reply = reply_msg_format(reply)
-    if reply:
-        if reply.get('MsgType') in OUTCOME_MSG:
-            reply['ToUserName'] = msgDict['FromUserName']
-            reply['FromUserName'] = msgDict['ToUserName']
-            if 'FileDir' in reply and reply['MsgType'] != TEXT:
-                r = core.upload(reply['MsgType'], reply['FileDir'])
-                if not r:
-                    logger.warning(r); return None, None
+if COROUTINE:
+    @gen.coroutine
+    def verify_reply(core, tns, reply, msgDict, isActualEncrypt):
+        reply = reply_msg_format(reply)
+        if reply:
+            if reply.get('MsgType') in OUTCOME_MSG:
+                reply['ToUserName'] = msgDict['FromUserName']
+                reply['FromUserName'] = msgDict['ToUserName']
+                if 'FileDir' in reply and reply['MsgType'] != TEXT:
+                    r = yield core.upload(reply['MsgType'], reply['FileDir'])
+                    if not r:
+                        logger.warning(r)
+                        raise gen.Return((None, None))
+                    else:
+                        reply['MediaId'] = r['media_id']
+                if core.config.encryptMode == SAFE and isActualEncrypt:
+                    raise gen.Return((encrypt_msg(*(tns +
+                        [core.config, reply])), reply))
                 else:
-                    reply['MediaId'] = r['media_id']
-            if core.config.encryptMode == SAFE and isActualEncrypt:
-                return encrypt_msg(*(tns +
-                    [core.config, reply])), reply
+                    raise gen.Return((construct_msg(reply), reply))
             else:
-                return construct_msg(reply), reply
+                logger.warning('Reply is invalid: unknown MsgType')
         else:
-            logger.warning('Reply is invalid: unknown MsgType')
-    else:
-        logger.warning('Reply is invalid: %s' % reply.get('errmsg'))
-    return None, None
+            logger.warning('Reply is invalid: %s' % reply.get('errmsg'))
+        raise gen.Return((None, None))
+else:
+    def verify_reply(core, tns, reply, msgDict, isActualEncrypt):
+        reply = reply_msg_format(reply)
+        if reply:
+            if reply.get('MsgType') in OUTCOME_MSG:
+                reply['ToUserName'] = msgDict['FromUserName']
+                reply['FromUserName'] = msgDict['ToUserName']
+                if 'FileDir' in reply and reply['MsgType'] != TEXT:
+                    r = core.upload(reply['MsgType'], reply['FileDir'])
+                    if not r:
+                        logger.warning(r); return None, None
+                    else:
+                        reply['MediaId'] = r['media_id']
+                if core.config.encryptMode == SAFE and isActualEncrypt:
+                    return encrypt_msg(*(tns +
+                        [core.config, reply])), reply
+                else:
+                    return construct_msg(reply), reply
+            else:
+                logger.warning('Reply is invalid: unknown MsgType')
+        else:
+            logger.warning('Reply is invalid: %s' % reply.get('errmsg'))
+        return None, None
 
 def construct_handler(core, isWsgi):
     get_fn, post_fn = construct_get_post_fn(core)
@@ -252,7 +280,8 @@ def msg_register(self, msgType):
      * register twice will override the older one
     '''
     def _msg_register(fn):
-        if COROUTINE: fn = gen.coroutine(fn)
+        if COROUTINE:
+            fn = gen.coroutine(fn)
         msgTypeList = msgType if isinstance(msgType, list) else [msgType]
         for t in msgTypeList:
             if t in INCOME_MSG:

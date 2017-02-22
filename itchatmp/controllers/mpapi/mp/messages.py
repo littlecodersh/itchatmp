@@ -66,7 +66,8 @@ def send_some(msgType, mediaId, additionalDict={},
     return r
 
 @access_token
-def send_all(msgType, mediaId, additionalDict={}, tagId=None, accessToken=None):
+def send_all(msgType, mediaId, additionalDict={},
+        tagId=None, agentId=None, accessToken=None):
     msgDict = __form_send_dict(msgType, mediaId, additionalDict)
     if not msgDict: return msgDict
     if tagId is None: 
@@ -158,7 +159,8 @@ def upload(fileType, fileDir, additionalDict={}, permanent=False, accessToken=No
     if not fileType in (IMAGE, VOICE, VIDEO, THUMB):
         return ReturnValue({'errcode': 40004,})
     try:
-        with open(fileDir, 'rb') as f: file = f.read()
+        with open(fileDir, 'rb') as f:
+            file_ = f.read()
     except:
         return ReturnValue({'errcode': -10004,})
     fileName = 'file' + os.path.splitext(fileDir)[1].decode('utf8', 'replace')
@@ -172,7 +174,7 @@ def upload(fileType, fileDir, additionalDict={}, permanent=False, accessToken=No
         url = '%s/cgi-bin/material/add_material?access_token=%s&type=%s'
     else:
         url = '%s/cgi-bin/media/upload?access_token=%s&type=%s' 
-    files = {'media': (fileName, file, fileMime), }
+    files = {'media': (fileName, file_, fileMime), }
     if fileType == VIDEO:
         files['description'] = (None,
             encode_send_dict(additionalDict), 'application/json'),
