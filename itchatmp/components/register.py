@@ -51,7 +51,7 @@ def construct_get_post_fn(core):
             else:
                 reply_fn = get_reply_fn(core, msgDict['MsgType'])
                 if reply_fn is None:
-                    return None
+                    return None, None
                 try:
                     reply = reply_fn(copy.deepcopy(msgDict))
                 except Exception as e:
@@ -180,22 +180,16 @@ else:
 
 def construct_handler(core, isWsgi):
     get_fn, post_fn = construct_get_post_fn(core)
+    class BaseHandler(RequestHandler):
+        def initialize(self):
+            self.closed = False
+        def on_connection_close(self):
+            self.closed = True
+        def get(self):
+            self.finish(get_fn(self))
     if isWsgi:
-        class MainHandler(RequestHandler):
-            def get(self):
-                self.finish(get_fn(self))
+        class MainHandler(BaseHandler):
             def post(self):
-                self.closed = False
-                def _timer_thread(handler):
-                    stopTime = time.time() + SERVER_WAIT_TIME
-                    while not handler.closed and time.time() < stopTime:
-                        time.sleep(SERVER_WAIT_TIME / 100)
-                    if not handler.closed:
-                        handler.finish()
-                        handler.closed = True
-                timeThread = threading.Thread(target=_timer_thread, args=(self,))
-                timeThread.setDaemon = True
-                timeThread.start()
                 r, rawReply = post_fn(self)
                 if self.closed: # server has stopped waiting
                     if rawReply:
@@ -203,46 +197,47 @@ def construct_handler(core, isWsgi):
                         if not r:
                             logger.warning('Reply error: %s' % r.get('errmsg', ''))
                 else:
-                    self.closed = True
                     self.finish(r)
     else:
         ioLoop = core.ioLoop
         if COROUTINE:
-            class MainHandler(RequestHandler):
-                def get(self):
-                    self.finish(get_fn(self))
+            class MainHandler(BaseHandler):
                 @tornado.gen.coroutine
                 def post(self):
+                    def time_out_callback():
+                        self.finish()
+                        self.closed = True
                     timeoutHandler = ioLoop.call_later(SERVER_WAIT_TIME,
-                        lambda: self.finish())
+                        time_out_callback)
                     r, rawReply = yield post_fn(self)
                     ioLoop.remove_timeout(timeoutHandler)
-                    if time.time() < timeoutHandler.deadline:
-                        self.finish(r)
-                    else:
+                    if self.closed:
                         if rawReply:
                             r = yield core.send(rawReply, rawReply.get('ToUserName', ''))
                             if not r:
                                 logger.warning('Reply error: %s' % r.get('errmsg', ''))
+                    else:
+                        self.finish(r)
         else:
             threadPool = ThreadPoolExecutor(core.threadPoolNumber)
-            class MainHandler(RequestHandler):
-                def get(self):
-                    self.finish(get_fn(self))
+            class MainHandler(BaseHandler):
                 @tornado.gen.coroutine
                 def post(self):
+                    def time_out_callback():
+                        self.finish()
+                        self.closed = True
                     timeoutHandler = ioLoop.call_later(SERVER_WAIT_TIME,
-                        lambda: self.finish())
+                        time_out_callback)
                     r, rawReply = yield threadPool.submit(post_fn, self)
                     ioLoop.remove_timeout(timeoutHandler)
-                    if time.time() < timeoutHandler.deadline:
-                        self.finish(r)
-                    else:
+                    if self.closed:
                         if rawReply:
                             r = yield threadPool.submit(core.send,
                                 (rawReply, rawReply.get('ToUserName', '')))
                             if not r:
                                 logger.warning('Reply error: %s' % r.get('errmsg', ''))
+                    else:
+                        self.finish(r)
     return MainHandler
 
 def update_config(self, config=None, atStorage=None, userStorage=None,
@@ -256,7 +251,8 @@ def update_config(self, config=None, atStorage=None, userStorage=None,
 def run(self, isWsgi=False, debug=True, port=80):
     self.isWsgi = isWsgi
     self.debug = debug
-    if debug: set_logging(loggingLevel=logging.DEBUG)
+    if debug:
+        set_logging(loggingLevel=logging.DEBUG)
     MainHandler = construct_handler(self, isWsgi)
     app = tornado.web.Application(
         [('/', MainHandler)], debug=debug)
