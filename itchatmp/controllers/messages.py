@@ -9,7 +9,7 @@ def send_some(msgType, mediaId, additionalDict={},
         targetIdList=[], partyIdList=[], tagIdList=[],
         agentId=None):
     return determine_wrapper(mpMsg.send_some, qyMsg.send_some,
-        msgTyp, mediaId, additionalDict,
+        msgType, mediaId, additionalDict,
         targetIdList, partyIdList, tagIdList, agentId)
 
 def send_all(msgType, mediaId, additionalDict={},

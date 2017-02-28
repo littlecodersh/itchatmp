@@ -101,7 +101,7 @@ def __form_send_dict(msgType, mediaId, additionalDict):
             'title': additionalDict.get('title', ''),
             'description': additionalDict.get('introduction', '')},
             'msgtype': 'video'},
-        FILE: {'media_id': mediaId, 'msgtype': 'file'},
+        FILE: {'file': {'media_id': mediaId}, 'msgtype': 'file'},
         NEWS: {'mpnews':{'media_id': mediaId}, 'msgtype': 'mpnews'},
         }[msgType]
 
@@ -124,10 +124,17 @@ def upload(fileType, fileDir, additionalDict={}, permanent=False, accessToken=No
     #             'application/json'),
     #         'file': ('tmp.mp4', openedFile, 'video/mp4') }
     # else:
-    files = {'file': openedFile}
-    r = requests.post(url % (COMPANY_URL, accessToken, fileType),
-        files=files).json()
-    if 'media_id' in r: r['errcode'] = 0
+    if hasattr(fileDir, 'fileno'):
+        files = {'file': fileDir}
+        r = requests.post(url % (COMPANY_URL, accessToken, fileType),
+            files=files).json()
+    else:
+        with open(fileDir, 'rb') as f:
+            files = {'file': f}
+            r = requests.post(url % (COMPANY_URL, accessToken, fileType),
+                files=files).json()
+    if 'media_id' in r:
+        r['errcode'] = 0
     return ReturnValue(r)
 
 @access_token
