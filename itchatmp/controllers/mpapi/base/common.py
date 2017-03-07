@@ -1,4 +1,4 @@
-import functools, logging, time, threading
+import functools, logging, time, threading, traceback
 from datetime import datetime, timedelta
 
 from requests.models import Response
@@ -103,48 +103,70 @@ def access_token_producer(tokenFn, forceSync=False):
         def _access_token(fn):
             @gen.coroutine
             @functools.wraps(fn)
-            def _access_token(*args, **kwargs):
+            def __access_token(*args, **kwargs):
                 accessToken, expireTime = __server.atStorage.get_access_token()
                 if expireTime < time.time():
                     updateResult = yield tokenFn()
-                    if not updateResult: raise gen.Return(updateResult)
+                    if not updateResult:
+                        raise gen.Return(updateResult)
                     accessToken, expireTime = __server.atStorage.get_access_token()
                 kwargs['accessToken'] = accessToken
                 future = fn(*args, **kwargs)
                 r = yield future
-                if isinstance(r, Response) and r.json().get('errcode') == 40014: # token timeout
+                try:
+                    errcode = r.json().get('errcode')
+                    isTokenTimeout = errcode == 40014
+                except:
+                    isTokenTimeout = False
+                if isinstance(r, Response) and isTokenTimeout:
                     updateResult = yield tokenFn()
-                    if not updateResult: raise gen.Return(updateResult)
+                    if not updateResult:
+                        raise gen.Return(updateResult)
                     accessToken, expireTime = __server.atStorage.get_access_token()
                     kwargs['accessToken'] = accessToken
                     future = fn(*args, **kwargs)
                     r = yield future
                 wrap_fn = getattr(future, '_wrap_result', None)
-                if wrap_fn is not None: r = wrap_fn(r)
+                if wrap_fn is not None:
+                    try:
+                        r = wrap_fn(r)
+                    except:
+                        r = ReturnValue({'errcode': -10005, 'errmsg': traceback.format_exc()})
                 raise gen.Return(r)
-            return _access_token
+            return __access_token
         return _access_token
     else:
         def _access_token(fn):
             @functools.wraps(fn)
-            def _access_token(*args, **kwargs):
+            def __access_token(*args, **kwargs):
                 accessToken, expireTime = __server.atStorage.get_access_token()
                 if expireTime < time.time():
                     updateResult = tokenFn()
-                    if not updateResult: return updateResult
+                    if not updateResult:
+                        return updateResult
                     accessToken, expireTime = __server.atStorage.get_access_token()
                 kwargs['accessToken'] = accessToken
                 r = fn(*args, **kwargs)
-                if isinstance(r, Response) and r.json().get('errcode') == 40014: # token timeout
+                try:
+                    errcode = r.json().get('errcode')
+                    isTokenTimeout = errcode == 40014
+                except:
+                    isTokenTimeout = False
+                if isinstance(r, Response) and isTokenTimeout:
                     updateResult = tokenFn()
-                    if not updateResult: return updateResult
+                    if not updateResult:
+                        return updateResult
                     accessToken, expireTime = __server.atStorage.get_access_token()
                     kwargs['accessToken'] = accessToken
                     r = fn(*args, **kwargs)
                 wrap_fn = getattr(r, '_wrap_result', None)
-                if wrap_fn is not None: r = wrap_fn(r)
+                if wrap_fn is not None:
+                    try:
+                        r = wrap_fn(r)
+                    except:
+                        r = ReturnValue({'errcode': -10005, 'errmsg': traceback.format_exc()})
                 return r
-            return _access_token
+            return __access_token
         return _access_token
 
 def set_server_list(get_server_ip):

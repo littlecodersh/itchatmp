@@ -37,7 +37,7 @@
      update_news
      get_image_url
 '''
-import logging, json, os, mimetypes
+import logging, json, os, mimetypes, io
 
 from ..requests import requests
 from .common import access_token
@@ -163,7 +163,9 @@ def upload(fileType, fileDir, additionalDict={}, permanent=False, accessToken=No
             file_ = f.read()
     except:
         return ReturnValue({'errcode': -10004,})
-    fileName = 'file' + os.path.splitext(fileDir)[1].decode('utf8', 'replace')
+    fileName = 'file' + os.path.splitext(fileDir)[1]
+    if hasattr(fileName, 'decode'):
+        fileName = fileName.decode('utf8', 'replace')
     fileMime = mimetypes.guess_type(fileName)[0] or 'application/octet-stream'
     if fileType == VIDEO and not ('title' in additionalDict
             and 'introduction' in additionalDict):
