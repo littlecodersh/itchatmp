@@ -113,7 +113,8 @@ def form_video_id(mediaId, additionalDict, accessToken=None):
     # I don't know why this is a fake ssl
     def _wrap_result(result):
         result = ReturnValue(result.json())
-        if 'media_id' in result: result['errcode'] = 0
+        if 'media_id' in result:
+            result['errcode'] = 0
         return result
     r._wrap_result = _wrap_result
     return r
@@ -179,12 +180,13 @@ def upload(fileType, fileDir, additionalDict={}, permanent=False, accessToken=No
     files = {'media': (fileName, file_, fileMime), }
     if fileType == VIDEO:
         files['description'] = (None,
-            encode_send_dict(additionalDict), 'application/json'),
+            encode_send_dict(additionalDict), 'application/json')
     r = requests.post(url % (SERVER_URL, accessToken, fileType),
         files=files)
     def _wrap_result(result):
         result = ReturnValue(result.json())
-        if 'media_id' in result: result['errcode'] = 0
+        if 'media_id' in result:
+            result['errcode'] = 0
         return result
     r._wrap_result = _wrap_result
     return r
