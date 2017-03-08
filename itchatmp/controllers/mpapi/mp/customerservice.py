@@ -97,10 +97,12 @@ def set_head_image(openedFile, kfAccount, accessToken=None):
 @access_token
 def send(msgType, mediaId, additionalDict={}, toUserId='', accessToken=None):
     msgDict = __form_send_dict(msgType, mediaId, additionalDict)
-    if not msgDict: return msgDict
+    if not msgDict:
+        return msgDict
     msgDict['touser'] = toUserId
     data = encode_send_dict(msgDict)
-    if data is None: return ReturnValue({'errcode': -10001})
+    if data is None:
+        return ReturnValue({'errcode': -10001})
     r = requests.post('%s/cgi-bin/message/custom/send?access_token=%s'
         % (SERVER_URL, accessToken), data=data)
     def _wrap_result(result):
@@ -115,7 +117,7 @@ def __form_send_dict(msgType, mediaId, additionalDict):
         if not ('musicurl' in additionalDict and 'hqmusicurl' in additionalDict
                 and 'thumb_media_id' in additionalDict):
             return ReturnValue({'errcode': -10003, 'errmsg': 
-                'additionalDict for type VIDEO should be: ' + 
+                'additionalDict for type MUSIC should be: ' + 
                 '{"musicurl" :MUSICURL, "hqmusicurl" :HQMUSICURL, ' +
                 '"thumb_media_id": MEDIA_ID}'})
     elif msgType == NEWS:

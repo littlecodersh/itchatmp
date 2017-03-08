@@ -31,15 +31,12 @@ def send(msg, toUserId, mediaId=None):
           - it supports all types: img, voc, vid, txt, nws, cad, msc
     '''
     msg = reply_msg_format(msg) # format string into dict
-    # get msgType and mediaId
-    if not ('MsgType' in msg and 'MediaId' in msg):
-        return ReturnValue({'errcode': -10003, 'errmsg': 
-            'value of key "MsgType" should be the msgType and ' +
-            'value of key "MediaId" should be mediaId (for text, value is content)'
-            })
-    else:
-        msgType, content = msg['MsgType'], msg['MediaId']
     # filter unexpected messages
+    if 'MsgType' in msg:
+        msgType = msg['MsgType']
+    else:
+        return ReturnValue({'errcode': -10003, 'errmsg': 
+            'value of key "MsgType" should be the msgType'})
     if msgType not in (IMAGE, VOICE, VIDEO, TEXT, NEWS, CARD, MUSIC):
         return ReturnValue({'errcode': -10003, 'errmsg': 
             'send supports: IMAGE, VOICE, VIDEO, TEXT, NEWS, CARD, MUSIC'})
@@ -50,36 +47,32 @@ def send(msg, toUserId, mediaId=None):
             '"thumb_media_id": MEDIA_ID}'})
     if COROUTINE:
         @gen.coroutine
-        def _send():
-            # deal with mediaId and fileDir
-            if mediaId is not None and msgType != TEXT:
-                c = mediaId
-            elif 'FileDir' in msg:
+        def _send(mediaId):
+            if 'FileDir' in msg and msgType != TEXT and not mediaId:
                 r = yield upload(msgType, msg['FileDir'])
-                if not r: raise gen.Return(r)
-                c = r['media_id']
-            else:
-                c = content
-            r = yield cssend(msgType, c, additionalDict=msg, toUserId=toUserId)
+                if not r:
+                    raise gen.Return(r)
+                mediaId = r['media_id']
+            r = yield cssend(msgType, mediaId, additionalDict=msg, toUserId=toUserId)
             r['preview'] = False
             if not r:
-                if r['errcode'] != 45015 or msgType == MUSIC: raise gen.Return(r)
-                r = yield preview(msgType, content, additionalDict=msg, toUserId=toUserId)
+                if r['errcode'] != 45015 or msgType == MUSIC:
+                    raise gen.Return(r)
+                r = yield preview(msgType, mediaId, additionalDict=msg, toUserId=toUserId)
                 r['preview'] = True
             raise gen.Return(r)
-        return _send()
+        return _send(mediaId)
     else:
-        # deal with mediaId and fileDir
-        if mediaId is not None and msgType != TEXT:
-            content = mediaId
-        elif 'FileDir' in msg:
+        if 'FileDir' in msg and msgType != TEXT and not mediaId:
             r = upload(msgType, msg['FileDir'])
-            if not r: return r
-            content = r['media_id']
-        r = cssend(msgType, content, additionalDict=msg, toUserId=toUserId)
+            if not r:
+                return r
+            mediaId = r['media_id']
+        r = cssend(msgType, mediaId, additionalDict=msg, toUserId=toUserId)
         r['preview'] = False
         if not r:
-            if r['errcode'] != 45015 or msgType == MUSIC: return r
-            r = preview(msgType, content, additionalDict=msg, toUserId=toUserId)
+            if r['errcode'] != 45015 or msgType == MUSIC:
+                return r
+            r = preview(msgType, mediaId, additionalDict=msg, toUserId=toUserId)
             r['preview'] = True
         return r
