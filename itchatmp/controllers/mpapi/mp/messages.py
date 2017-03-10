@@ -187,6 +187,12 @@ def upload(fileType, fileDir, additionalDict={}, permanent=False, accessToken=No
         result = ReturnValue(result.json())
         if 'media_id' in result:
             result['errcode'] = 0
+        else:
+            for k in result:
+                if 'media_id' in k:
+                    result['media_id'] = result[k]
+                    result['errcode'] = 0
+                    break
         return result
     r._wrap_result = _wrap_result
     return r

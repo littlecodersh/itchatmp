@@ -1,13 +1,36 @@
 #coding=utf8
-import sys
+import sys, collections
+
+from tornado.gen import Future
 
 TRANSLATE = 'Chinese'
 TRANSLATION = {}
 
-class ReturnValue(dict):
+class NotDict(collections.MutableMapping):
+    def __init__(self, *args, **kwargs):
+        self.store = dict()
+        self.update(dict(*args, **kwargs))
+    def __getitem__(self, key):
+        return self.store[self.__keytransform__(key)]
+    def __setitem__(self, key, value):
+        self.store[self.__keytransform__(key)] = value
+    def __delitem__(self, key):
+        del self.store[self.__keytransform__(key)]
+    def __iter__(self):
+        return iter(self.store)
+    def __len__(self):
+        return len(self.store)
+    def __keytransform__(self, key):
+        return key
+
+class ReturnValue(NotDict, Future):
     def __init__(self, returnValueDict={}):
+        # make returnvalue yieldable
+        NotDict.__init__(self, **returnValueDict)
+        Future.__init__(self)
+        self.set_result(self)
+        # init
         self._wrap_result = None
-        for k, v in returnValueDict.items(): self[k] = v
         if TRANSLATE:
             self['rawmsg'] = self.get('errmsg', '')
             self['errmsg'] = \

@@ -1,4 +1,4 @@
-import time, logging, re, os
+import time, logging, re, os, json
 import traceback
 try:
     import lxml.etree as ET
@@ -38,35 +38,44 @@ def reply_msg_format(msg):
     ''' turns string reply to reply dict
      * if format failed, it will return a ReturnValue equals to False
      * if succeeded, it will return a dict equals to string
+     * string content will be filled in MediaId key
     '''
     if isinstance(msg, dict):
         r = msg
     elif hasattr(msg, 'capitalize'):
-        msgType, content = msg[:5], msg[5:]
+        msgType, content = msg[1:4], msg[5:]
         r = {}
-        if not re.match('@[a-z]{3}@', msgType):
+        if not re.match('@[a-z]{3}@', msg[:5]):
             r['MsgType'] = TEXT
-            r['MediaId'] = msgType + content
-        elif msgType[1:4] == 'msc':
+            r['MediaId'] = msg
+        elif msgType == 'msc':
             return ReturnValue({'errcode': -10003, 'errmsg': 
-                'msg for type MUSIC should be: {"msgType": MUSIC, ' + 
+                'msg for type MUSIC should be: {"MsgType": MUSIC, ' + 
                 '"musicurl" :MUSICURL, "hqmusicurl" :HQMUSICURL, ' +
                 '"thumb_media_id": MEDIA_ID}'})
-        elif msgType[1:4] not in ('img', 'voc', 'vid', 'txt', 'nws', 'cad'):
+        elif msgType not in ('img', 'voc', 'vid', 'txt', 'nws', 'cad'):
             return ReturnValue({'errcode': -10003, 'errmsg': 
                 'send supports: img, voc, vid, txt, nws, cad'})
+        elif msgType == 'txt':
+            r['MsgType'] = TEXT
+            r['MediaId'] = content
+        elif msgType in ('nws', 'cad'):
+            r['MsgType'] = NEWS if msgType == 'nws' else CARD
+            try:
+                r.update(json.loads(content))
+            except:
+                logger.warning('content of %s is not a valid json' % r['MsgType'])
         else:
-            r['MsgType'] = {'img': IMAGE, 'voc': VOICE, 'vid': VIDEO, 'txt': TEXT,
-                'nws': NEWS, 'cad': CARD}[msgType[1:4]]
-            r['FileDir'] = content
+            r['MsgType'] = {'img': IMAGE, 'voc': VOICE, 'vid': VIDEO}[msgType]
+            if os.path.isfile(content):
+                r['FileDir'] = content
+            else:
+                r['MediaId'] = content
     else:
         r = ReturnValue({'errcode': -10003, 'errmsg': 
             'msg should be string or dict'})
-    if r and r.get('MsgType') == TEXT:
-        if 'MediaId' not in r and 'Content' in r:
-            r['MediaId'] = r['Content']
-        elif 'MediaId' in r and 'Content' not in r:
-            r['Content'] = r['MediaId']
+    if 'Content' in r and not 'MediaId' in r and r.get('MsgType') == TEXT:
+        r['MediaId'] = r['Content']
     return r
 
 def construct_msg(replyDict):

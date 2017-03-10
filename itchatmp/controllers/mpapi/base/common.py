@@ -112,7 +112,10 @@ def access_token_producer(tokenFn, forceSync=False):
                     accessToken, expireTime = __server.atStorage.get_access_token()
                 kwargs['accessToken'] = accessToken
                 future = fn(*args, **kwargs)
-                r = yield future
+                if gen.is_future(future):
+                    r = yield future
+                else:
+                    r = future
                 try:
                     errcode = r.json().get('errcode')
                     isTokenTimeout = errcode == 40014

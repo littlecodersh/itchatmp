@@ -40,16 +40,12 @@ def send(msg, toUserId, mediaId=None):
     if msgType not in (IMAGE, VOICE, VIDEO, TEXT, NEWS, CARD, MUSIC):
         return ReturnValue({'errcode': -10003, 'errmsg': 
             'send supports: IMAGE, VOICE, VIDEO, TEXT, NEWS, CARD, MUSIC'})
-    elif msgType == MUSIC and not ('musicurl' in msg and 'hqmusicurl' in msg):
-        return ReturnValue({'errcode': -10003, 'errmsg': 
-            'msg for type MUSIC should be: {"msgType": MUSIC, ' + 
-            '"musicurl" :MUSICURL, "hqmusicurl" :HQMUSICURL, ' +
-            '"thumb_media_id": MEDIA_ID}'})
     if COROUTINE:
         @gen.coroutine
         def _send(mediaId):
+            mediaId = mediaId or msg.get('MediaId', '')
             if 'FileDir' in msg and msgType != TEXT and not mediaId:
-                r = yield upload(msgType, msg['FileDir'])
+                r = yield upload(msgType, msg['FileDir'], additionalDict=msg)
                 if not r:
                     raise gen.Return(r)
                 mediaId = r['media_id']
@@ -63,6 +59,7 @@ def send(msg, toUserId, mediaId=None):
             raise gen.Return(r)
         return _send(mediaId)
     else:
+        mediaId = mediaId or msg.get('MediaId', '')
         if 'FileDir' in msg and msgType != TEXT and not mediaId:
             r = upload(msgType, msg['FileDir'])
             if not r:
