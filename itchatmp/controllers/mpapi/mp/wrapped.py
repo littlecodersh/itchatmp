@@ -26,8 +26,10 @@ def send(msg, toUserId, mediaId=None):
         - it can be a dict (for encoding other than ascii, unicode should be used)
           - value of key "MsgType" should be the msgType
           - value of key "MediaId" should be mediaId (for text, value is content)
+          - for VIDEO, there need to be two more keys:
+            - Title, Introduction
           - for MUSIC, there need to be three more keys:
-            - musicurl, hqmusicurl, thumb_media_id
+            - MusicUrl, HqMusicUrl, ThumbMediaId
           - it supports all types: img, voc, vid, txt, nws, cad, msc
     '''
     msg = reply_msg_format(msg) # format string into dict
@@ -36,7 +38,7 @@ def send(msg, toUserId, mediaId=None):
         msgType = msg['MsgType']
     else:
         return ReturnValue({'errcode': -10003, 'errmsg': 
-            'value of key "MsgType" should be the msgType'})
+            'value of key "MsgType" should be a valid message type'})
     if msgType not in (IMAGE, VOICE, VIDEO, TEXT, NEWS, CARD, MUSIC):
         return ReturnValue({'errcode': -10003, 'errmsg': 
             'send supports: IMAGE, VOICE, VIDEO, TEXT, NEWS, CARD, MUSIC'})
@@ -45,7 +47,7 @@ def send(msg, toUserId, mediaId=None):
         def _send(mediaId):
             mediaId = mediaId or msg.get('MediaId', '')
             if 'FileDir' in msg and msgType != TEXT and not mediaId:
-                r = yield upload(msgType, msg['FileDir'], additionalDict=msg)
+                r = yield upload(msgType, msg['FileDir'], msg, msg.get('Permanent', False))
                 if not r:
                     raise gen.Return(r)
                 mediaId = r['media_id']
@@ -61,7 +63,7 @@ def send(msg, toUserId, mediaId=None):
     else:
         mediaId = mediaId or msg.get('MediaId', '')
         if 'FileDir' in msg and msgType != TEXT and not mediaId:
-            r = upload(msgType, msg['FileDir'])
+            r = upload(msgType, msg['FileDir'], msg, msg.get('Permanent', False))
             if not r:
                 return r
             mediaId = r['media_id']

@@ -157,8 +157,23 @@ def get(msgId, accessToken=None):
 
 @access_token
 def upload(fileType, fileDir, additionalDict={}, permanent=False, accessToken=None):
+    if additionalDict: # format additionalDict
+        for key in ('description',):
+            if key in additionalDict and isinstance(additionalDict[key], dict):
+                for k, v in additionalDict[key].items():
+                    if k not in additionalDict:
+                        additionalDict[k] = v
+        additionalDict = {k.lower().replace('_', ''): v
+            for k, v in additionalDict.items()}
+        if 'introduction' in additionalDict:
+            additionalDict['description'] = additionalDict['introduction']
     if not fileType in (IMAGE, VOICE, VIDEO, THUMB):
         return ReturnValue({'errcode': 40004,})
+    elif fileType == VIDEO and not ('title' in additionalDict
+            and 'description' in additionalDict):
+        return ReturnValue({'errcode': -10001, 'errmsg': 
+            'additionalDict for type VIDEO should be: ' + 
+            "{'Title' : 'title', 'Description' :'des'}"})
     try:
         with open(fileDir, 'rb') as f:
             file_ = f.read()
@@ -168,19 +183,16 @@ def upload(fileType, fileDir, additionalDict={}, permanent=False, accessToken=No
     if hasattr(fileName, 'decode'):
         fileName = fileName.decode('utf8', 'replace')
     fileMime = mimetypes.guess_type(fileName)[0] or 'application/octet-stream'
-    if fileType == VIDEO and not ('title' in additionalDict
-            and 'introduction' in additionalDict):
-        return ReturnValue({'errcode': -10001, 'errmsg': 
-            'additionalDict for type VIDEO should be: ' + 
-            '{"title" :VIDEO_TITLE, "introduction" :INTRODUCTION}'})
     if permanent:
         url = '%s/cgi-bin/material/add_material?access_token=%s&type=%s'
     else:
         url = '%s/cgi-bin/media/upload?access_token=%s&type=%s' 
     files = {'media': (fileName, file_, fileMime), }
     if fileType == VIDEO:
-        files['description'] = (None,
-            encode_send_dict(additionalDict), 'application/json')
+        files['description'] = (None, encode_send_dict({
+            'title': additionalDict['title'],
+            'introduction': additionalDict['description'], }
+            ), 'application/json')
     r = requests.post(url % (SERVER_URL, accessToken, fileType),
         files=files)
     def _wrap_result(result):

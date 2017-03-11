@@ -111,32 +111,58 @@ def send(msgType, mediaId, additionalDict={}, toUserId='', accessToken=None):
     return r
 
 def __form_send_dict(msgType, mediaId, additionalDict):
+    ''' additionalDict will be formatted to give full compacity to input
+    thumb_media_id, ThumbMediaId, thumbmediaid are all supported '''
     if not msgType in (IMAGE, VOICE, VIDEO, TEXT, NEWS, CARD, MUSIC):
         return ReturnValue({'errcode': 40008,})
+    if additionalDict: # format additionalDict
+        for key in ('text', 'image', 'voice', 'video',
+                'music', 'news', 'mpnews', 'wxcard'):
+            if key in additionalDict and isinstance(additionalDict[key], dict):
+                for k, v in additionalDict[key].items():
+                    if k not in additionalDict:
+                        additionalDict[k] = v
+        additionalDict = {k.lower().replace('_', ''): v
+            for k, v in additionalDict.items()}
+        if 'cardid' in additionalDict:
+            additionalDict['mediaid'] = additionalDict['cardid']
+        if 'introduction' in additionalDict:
+            additionalDict['description'] = additionalDict['introduction']
+    if msgType == VIDEO:
+        if not all((k in additionalDict for k in ('title', 'description'))):
+            return ReturnValue({'errcode': -10003, 'errmsg': 
+                'additionalDict for type VIDEO should be: ' + 
+                "{'ThumbMediaId': 'id', 'Title': 'title', " +
+                "'Description': 'des'}"})
     elif msgType == MUSIC:
-        if not ('music' in additionalDict and 'musicurl' in additionalDict['music'] 
-                and 'hqmusicurl' in additionalDict['music']
-                and 'description' in additionalDict['music']
-                and 'thumb_media_id' in additionalDict['music']):
+        if not all((k in additionalDict for k in ('title', 'description',
+                'musicurl', 'hqmusicurl', 'thumbmediaid'))):
             return ReturnValue({'errcode': -10003, 'errmsg': 
                 'additionalDict for type MUSIC should be: ' + 
-                '{"music": {"musicurl" :MUSICURL, "hqmusicurl" :HQMUSICURL, ' +
-                '"thumb_media_id": MEDIA_ID}}'})
+                "{'MusicUrl' : 'url', 'HqMusicUrl' : 'url', " +
+                "'Title': 'title', 'Description': 'des', " +
+                "'ThumbMediaId': 'id'}"})
     elif msgType == NEWS:
-        if 'articles' in additionalDict:
+        if 'articles' not in additionalDict:
             msgType = 'mpnews'
     return {
         TEXT: {'text': {'content': mediaId}, 'msgtype': 'text'},
         IMAGE: {'image': {'media_id': mediaId}, 'msgtype': 'image'},
         VOICE: {'voice': {'media_id': mediaId}, 'msgtype': 'voice'},
         VIDEO: {'video': {'media_id': mediaId,
-            'thumb_media_id': additionalDict.get('thumb_media_id', ''),
-            'title': additionalDict.get('title', ''),
-            'description': additionalDict.get('introduction', '')},
+                'thumb_media_id': additionalDict.get('thumbmediaid', ''),
+                'title': additionalDict.get('title', ''),
+                'description': additionalDict.get('description', '')},
             'msgtype': 'video'},
-        MUSIC: {'music': additionalDict['music'], 'msgtype': 'music'},
+        MUSIC: {'music': {
+                'title': additionalDict.get('title', ''),
+                'description': additionalDict.get('description', ''),
+                'musicurl': additionalDict.get('musicurl', ''),
+                'hqmusicurl': additionalDict.get('hqmusicurl', ''),
+                'thumb_media_id': additionalDict.get('thumbmediaid', ''), },
+            'msgtype': 'music'},
         NEWS: {'news':{'articles': additionalDict.get('articles', [])},
-            'msgtype': 'mpnews'},
+            'msgtype': 'news'},
         'mpnews': {'mpnews':{'media_id': mediaId}, 'msgtype': 'mpnews'},
         CARD: {'wxcard': {'card_id': mediaId}, 'msgtype': 'wxcard'},
         }[msgType]

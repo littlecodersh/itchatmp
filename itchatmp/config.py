@@ -1,4 +1,4 @@
-VERSION = '0.0.15'
+VERSION = '0.0.16'
 
 SERVER_URL = 'https://api.weixin.qq.com'
 COMPANY_URL = 'https://qyapi.weixin.qq.com'
