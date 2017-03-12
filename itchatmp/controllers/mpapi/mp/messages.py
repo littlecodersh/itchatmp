@@ -37,7 +37,7 @@
      update_news
      get_image_url
 '''
-import logging, json, os, mimetypes, io
+import logging, json, os, mimetypes, io, re
 
 from ..requests import requests
 from .common import access_token
@@ -169,10 +169,10 @@ def upload(fileType, fileDir, additionalDict={}, permanent=False, accessToken=No
             additionalDict['description'] = additionalDict['introduction']
     if not fileType in (IMAGE, VOICE, VIDEO, THUMB):
         return ReturnValue({'errcode': 40004,})
-    elif fileType == VIDEO and not ('title' in additionalDict
+    elif fileType == VIDEO and permanent and not ('title' in additionalDict
             and 'description' in additionalDict):
-        return ReturnValue({'errcode': -10001, 'errmsg': 
-            'additionalDict for type VIDEO should be: ' + 
+        return ReturnValue({'errcode': -10003, 'errmsg':
+            'additionalDict for type VIDEO should be: ' +
             "{'Title' : 'title', 'Description' :'des'}"})
     try:
         with open(fileDir, 'rb') as f:
@@ -188,7 +188,7 @@ def upload(fileType, fileDir, additionalDict={}, permanent=False, accessToken=No
     else:
         url = '%s/cgi-bin/media/upload?access_token=%s&type=%s' 
     files = {'media': (fileName, file_, fileMime), }
-    if fileType == VIDEO:
+    if fileType == VIDEO and permanent:
         files['description'] = (None, encode_send_dict({
             'title': additionalDict['title'],
             'introduction': additionalDict['description'], }
@@ -214,13 +214,25 @@ def download(mediaId, accessToken=None):
     r = requests.get('%s/cgi-bin/media/get?access_token=%s&media_id=%s' % 
         (SERVER_URL, accessToken, mediaId), stream=True)
     def _wrap_result(result):
-        if 'application/json' in result.headers['Content-Type']:
-            return ReturnValue(result.json())
+        if 'text/plain' in result.headers['Content-Type']:
+            j = result.json()
+            if 'down_url' in j or 'news_item' in j:
+                j['errcode'] = 0
+            return ReturnValue(j)
         else:
             tempStorage = io.BytesIO()
             for block in result.iter_content(1024):
                 tempStorage.write(block)
-            return ReturnValue({'file': tempStorage, 'errcode': 0})
+            basicDict = {'File': tempStorage, 'errcode': 0}
+            if 'Content-disposition' in result.headers:
+                match = re.search('filename="(.*?)"', result.headers['Content-disposition'])
+                if match:
+                    basicDict['FileName'] = match.group(1)
+            if 'Content-Type' in result.headers:
+                basicDict['ContentType'] = result.headers['Content-Type']
+            if 'Content-Length' in result.headers:
+                basicDict['ContentLength'] = result.headers['Content-Length']
+            return ReturnValue(basicDict)
     r._wrap_result = _wrap_result
     return r
 
@@ -232,15 +244,25 @@ def get_material(mediaId, accessToken=None):
     r = requests.post('%s/cgi-bin/material/get_material?access_token=%s' % 
         (SERVER_URL, accessToken), data=data, stream=True)
     def _wrap_result(result):
-        if 'application/json' in result.headers['Content-Type']:
+        if 'text/plain' in result.headers['Content-Type']:
             j = result.json()
-            if 'news_item' in j or 'down_url' in j: j['errcode'] = 0
+            if 'down_url' in j or 'news_item' in j:
+                j['errcode'] = 0
             return ReturnValue(j)
         else:
             tempStorage = io.BytesIO()
             for block in result.iter_content(1024):
                 tempStorage.write(block)
-            return ReturnValue({'file': tempStorage, 'errcode': 0})
+            basicDict = {'File': tempStorage, 'errcode': 0}
+            if 'Content-disposition' in result.headers:
+                match = re.search('filename="(.*?)"', result.headers['Content-disposition'])
+                if match:
+                    basicDict['FileName'] = match.group(1)
+            if 'Content-Type' in result.headers:
+                basicDict['ContentType'] = result.headers['Content-Type']
+            if 'Content-Length' in result.headers:
+                basicDict['ContentLength'] = result.headers['Content-Length']
+            return ReturnValue(basicDict)
     r._wrap_result = _wrap_result
     return r
 
@@ -254,12 +276,13 @@ def delete_material(mediaId, accessToken=None):
     return r
 
 @access_token
-def get_materialcount(accessToken=None):
+def get_material_count(accessToken=None):
     r = requests.get('%s/cgi-bin/material/get_materialcount?access_token=%s'
         % (SERVER_URL, accessToken))
     def _wrap_result(result):
         result = ReturnValue(result.json())
-        if 'voice_count' in result: result['errcode'] = 0
+        if 'voice_count' in result:
+            result['errcode'] = 0
         return result
     r._wrap_result = _wrap_result
     return r
@@ -320,6 +343,18 @@ def get_image_url(openedFile, accessToken=None):
     def _wrap_result(result):
         result = ReturnValue(result.json())
         if 'url' in result: result['errcode'] = 0
+        return result
+    r._wrap_result = _wrap_result
+    return r
+
+@access_token
+def get_autoreply(accessToken=None):
+    r = requests.post('%s/cgi-bin/get_current_autoreply_info?access_token=%s' % 
+        (SERVER_URL, accessToken))
+    def _wrap_result(result):
+        result = ReturnValue(result.json())
+        if 'is_autoreply_open' in result:
+            result['errcode'] = 0
         return result
     r._wrap_result = _wrap_result
     return r

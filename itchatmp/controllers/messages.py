@@ -45,8 +45,8 @@ def delete_material(mediaId):
     return determine_wrapper(mpMsg.delete_material, qyMsg.delete_material,
         mediaId)
 
-def get_materialcount():
-    return determine_wrapper(mpMsg.get_materialcount, qyMsg.get_materialcount)
+def get_material_count():
+    return determine_wrapper(mpMsg.get_material_count, qyMsg.get_material_count)
 
 def batchget_material(fileType, offset=0, count=20):
     return determine_wrapper(mpMsg.batchget_material, qyMsg.batchget_material,
@@ -63,5 +63,8 @@ def update_news(mediaId, newsDict, index=0):
 def get_image_url(openedFile):
     return determine_wrapper(mpMsg.get_image_url, qyMsg.get_image_url,
         openedFile)
+
+def get_autoreply():
+    return determine_wrapper(mpMsg.get_autoreply, None)
 
 server.upload = upload

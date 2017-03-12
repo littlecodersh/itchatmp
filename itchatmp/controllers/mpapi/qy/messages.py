@@ -179,7 +179,7 @@ def delete_material(mediaId, accessToken=None):
     return ReturnValue(r)
 
 @access_token
-def get_materialcount(accessToken=None):
+def get_material_count(accessToken=None):
     r = requests.get('%s/cgi-bin/material/get_count?access_token=%s'
         % (COMPANY_URL, accessToken)).json()
     return ReturnValue(r)

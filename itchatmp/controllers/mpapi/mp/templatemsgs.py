@@ -28,7 +28,8 @@ def get_industry(accessToken=None):
         (SERVER_URL, accessToken))
     def _wrap_result(result):
         result = ReturnValue(result.json())
-        if 'primary_industry' in result: result['errcode'] = 0
+        if 'primary_industry' in result:
+            result['errcode'] = 0
         return result
     r._wrap_result = _wrap_result
     return r
