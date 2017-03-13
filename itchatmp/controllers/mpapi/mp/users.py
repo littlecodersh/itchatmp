@@ -41,12 +41,14 @@ def create_tag(name, id=None, accessToken=None):
      * id is for qy only
     '''
     data = encode_send_dict({'tag': {'name': name}})
-    if data is None: return ReturnValue({'errcode': -10001})
+    if data is None:
+        return ReturnValue({'errcode': -10001})
     r = requests.post('%s/cgi-bin/tags/create?access_token=%s'
         % (SERVER_URL, accessToken), data=data)
     def _wrap_result(result):
         result = ReturnValue(result.json())
-        if 'tag' in result: result['errcode'] = 0
+        if 'tag' in result:
+            result['errcode'] = 0
         return result
     r._wrap_result = _wrap_result
     return r
@@ -57,7 +59,8 @@ def get_tags(accessToken=None):
         % (SERVER_URL, accessToken))
     def _wrap_result(result):
         result = ReturnValue(result.json())
-        if 'tags' in result: result['errcode'] = 0
+        if 'tags' in result:
+            result['errcode'] = 0
         return result
     r._wrap_result = _wrap_result
     return r
@@ -65,7 +68,8 @@ def get_tags(accessToken=None):
 @access_token
 def update_tag(id, name, accessToken=None):
     data = encode_send_dict({'tag': {'name': name, 'id': id}})
-    if data is None: return ReturnValue({'errcode': -10001})
+    if data is None:
+        return ReturnValue({'errcode': -10001})
     r = requests.post('%s/cgi-bin/tags/update?access_token=%s'
         % (SERVER_URL, accessToken), data=data)
     def _wrap_result(result):
@@ -76,7 +80,8 @@ def update_tag(id, name, accessToken=None):
 @access_token
 def delete_tag(id, accessToken=None):
     data = encode_send_dict({'tag': {'id': id}})
-    if data is None: return ReturnValue({'errcode': -10001})
+    if data is None:
+        return ReturnValue({'errcode': -10001})
     r = requests.post('%s/cgi-bin/tags/delete?access_token=%s'
         % (SERVER_URL, accessToken), data=data)
     def _wrap_result(result):
@@ -87,21 +92,25 @@ def delete_tag(id, accessToken=None):
 @access_token
 def get_users_of_tag(id, nextOpenId='', accessToken=None):
     data = encode_send_dict({'tagid': id, 'next_openid': nextOpenId})
-    if data is None: return ReturnValue({'errcode': -10001})
-    r = requests.post('%s/cgi-bin/tag/get?access_token=%s'
+    if data is None:
+        return ReturnValue({'errcode': -10001})
+    r = requests.post('%s/cgi-bin/user/tag/get?access_token=%s'
         % (SERVER_URL, accessToken), data=data)
     def _wrap_result(result):
         result = ReturnValue(result.json())
-        if 'count' in result: result['errcode'] = 0
+        if 'count' in result:
+            result['errcode'] = 0
         return result
     r._wrap_result = _wrap_result
     return r
 
 @access_token
 def add_users_into_tag(id, userIdList=None, partyList=None, accessToken=None):
-    if not userIdList: return ReturnValue({'errcode': 40035, 'errmsg': 'must have one userId'})
+    if not userIdList:
+        return ReturnValue({'errcode': 40035, 'errmsg': 'must have one userId'})
     data = encode_send_dict({'openid_list': userIdList, 'tagid': id})
-    if data is None: return ReturnValue({'errcode': -10001})
+    if data is None:
+        return ReturnValue({'errcode': -10001})
     r = requests.post('%s/cgi-bin/tags/members/batchtagging?access_token=%s'
         % (SERVER_URL, accessToken), data=data)
     def _wrap_result(result):
