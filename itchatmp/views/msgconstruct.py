@@ -98,7 +98,10 @@ def construct_msg(replyDict):
         return ''
     def _fill_key(d, k):
         d[k] = d.get(k, '')
-    if replyDict['MsgType'] == VIDEO:
+    if replyDict['MsgType'] == TEXT:
+        if 'MediaId' in replyDict and 'Content' not in replyDict:
+            replyDict['Content'] = replyDict['MediaId']
+    elif replyDict['MsgType'] == VIDEO:
         for k in ('Title', 'Description'):
             _fill_key(replyDict, k)
     elif replyDict['MsgType'] == MUSIC:

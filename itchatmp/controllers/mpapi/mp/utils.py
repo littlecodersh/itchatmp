@@ -29,7 +29,8 @@ def create_qrcode(sceneData, expire=2592000):
         if not isinstance(sceneData, int):
             return ReturnValue({'errcode': -10003, 'errmsg':
                 'sceneData for tmp qrcode can only be int'})
-        if not 0 < expire < 2592000: expire = 2592000
+        if not 0 < expire < 2592000:
+            expire = 2592000
         data['expire_seconds'] = expire
         data['action_name'] = 'QR_SCENE'
         data['action_info']['scene']['scene_id'] = sceneData
@@ -49,7 +50,8 @@ def create_qrcode(sceneData, expire=2592000):
             % (SERVER_URL, accessToken), data=data)
         def _wrap_result(result):
             result = ReturnValue(result.json())
-            if 'ticket' in result: result['errcode'] = 0
+            if 'ticket' in result:
+                result['errcode'] = 0
             return result
         r._wrap_result = _wrap_result
         return r
@@ -68,7 +70,7 @@ def download_qrcode(ticket):
                 tempStorage = io.BytesIO()
                 for block in r.iter_content(1024):
                     tempStorage.write(block)
-                r = ReturnValue({'file': tempStorage, 'errcode': 0})
+                r = ReturnValue({'File': tempStorage, 'errcode': 0})
             raise gen.Return(r)
     else:
         def _download_qrcode(ticket):
@@ -81,7 +83,7 @@ def download_qrcode(ticket):
                 tempStorage = io.BytesIO()
                 for block in r.iter_content(1024):
                     tempStorage.write(block)
-                r = ReturnValue({'file': tempStorage, 'errcode': 0})
+                r = ReturnValue({'File': tempStorage, 'errcode': 0})
             return
     return _download_qrcode
 

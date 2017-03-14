@@ -32,9 +32,7 @@ class WechatConfig(object):
         return True
 
 class WechatServer(object):
-    '''
-        Wechat server class
-    '''
+    ''' Wechat server class '''
     def __new__(cls, config, atStorage, userStorage,
             filterRequest=False, threadPoolNumber=None):
         ''' 
@@ -64,43 +62,28 @@ class WechatServer(object):
         self._replyFnDict = {}
     def update_config(self, config=None, atStorage=None, userStorage=None,
             filterRequest=None, threadPoolNumber=None):
-        '''
-            it is defined in components/register
-        '''
+        ''' it is defined in components/register '''
         raise NotImplementedError()
     def run(self, isWsgi=False, debug=True, port=80):
-        '''
-            it is defined in components/register
-        '''
+        ''' it is defined in components/register '''
         raise NotImplementedError()
     def msg_register(self, msgType):
-        '''
-            it is defined in components/register
-        '''
+        ''' it is defined in components/register '''
         raise NotImplementedError()
     def upload(fileType, fileDir, additionalDict={}, permanent=False):
-        '''
-            it is defined in controllers/messages.py
-        '''
+        ''' it is defined in controllers/messages.py '''
         raise NotImplementedError()
     def send(self, msg, toUserName, mediaId=None):
-        '''
-            it is defined in controllers/wrapped.py
-        '''
+        ''' it is defined in controllers/wrapped.py '''
         raise NotImplementedError()
     def filter_request(self, request):
-        '''
-            this is not open for calling
+        ''' this is not open for calling
             it is defined in controllers/common.py
         '''
         raise NotImplementedError()
     def access_token(self, fn):
-        '''
-            it is defined in controllers/common.py
-        '''
+        ''' it is defined in controllers/common.py '''
         raise NotImplementedError()
     def clear_quota(self):
-        '''
-            it is defined in controllers/common.py
-        '''
+        ''' it is defined in controllers/common.py '''
         raise NotImplementedError()
