@@ -88,7 +88,7 @@ def construct_msg(replyDict):
                 replyDict['CreateTime'] = int(time.time())
             return template.format(**replyDict)
         except KeyError as e:
-            logger.debug('Missing message element "%s"' % e.message)
+            logger.debug('Missing message element "%s"' % e.args)
         except UnicodeDecodeError as e:
             logger.debug('All non-ascii values should be unicode like: u"value"')
         except:

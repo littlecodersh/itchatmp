@@ -1,6 +1,6 @@
 # 用户管理
 
-本文主要介绍三个接口，与[官方文档][mp-wiki]的位置对应如下：
+本文主要介绍十三个接口，与[官方文档][mp-wiki]的位置对应如下：
 
 * users.get_tags: 用户管理-用户标签管理
 * users.delete_tag: 用户管理-用户标签管理
@@ -99,3 +99,4 @@ print(r)
 r = itchatmp.users.delete_users_of_blacklist(toUserName)
 print(r)
 ```
+[mp-wiki]: https://mp.weixin.qq.com/wiki
