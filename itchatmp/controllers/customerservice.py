@@ -1,25 +1,21 @@
-from .common import determine_wrapper as dwp
+from .common import BaseController
 from .mpapi.mp import customerservice as mpCs
 
-def get():
-    return dwp(mpCs.get, None)
-
-def add(accountDict, autoDecide=True):
-    return dwp(mpCs.add, None,
-        accountDict, autoDecide)
-
-def update(accountDict, autoDecide=True):
-    return dwp(mpCs.update, None,
-        accountDict, autoDecide)
-
-def delete(accountDict, autoDecide=True):
-    return dwp(mpCs.delete, None,
-        accountDict, autoDecide)
-
-def set_head_image(openedFile, kfAccount):
-    return dwp(mpCs.set_head_image, None,
-        openedFile, kfAccount)
-
-def send(msgType, mediaId, additionalDict={}, toUserId=''):
-    return dwp(mpCs.send, None,
-        msgType, mediaId, additionalDict, toUserId)
+class CustomerService(BaseController):
+    def get(self):
+        return self.determine_wrapper(mpCs.get, None)
+    def add(self, accountDict, autoDecide=True):
+        return self.determine_wrapper(mpCs.add, None,
+            accountDict, autoDecide)
+    def update(self, accountDict, autoDecide=True):
+        return self.determine_wrapper(mpCs.update, None,
+            accountDict, autoDecide)
+    def delete(self, accountDict, autoDecide=True):
+        return self.determine_wrapper(mpCs.delete, None,
+            accountDict, autoDecide)
+    def set_head_image(self, openedFile, kfAccount):
+        return self.determine_wrapper(mpCs.set_head_image, None,
+            openedFile, kfAccount)
+    def send(self, msgType, mediaId, additionalDict={}, toUserId=''):
+        return self.determine_wrapper(mpCs.send, None,
+            msgType, mediaId, additionalDict, toUserId)

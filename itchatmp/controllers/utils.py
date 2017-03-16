@@ -1,14 +1,13 @@
-from .common import determine_wrapper as dwp
+from .common import BaseController
 from .mpapi.mp import utils as mpUtils
 
-def create_qrcode(sceneData, expire=2592000):
-    return dwp(mpUtils.create_qrcode, None,
-        sceneData, expire)
-
-def download_qrcode(ticket):
-    return dwp(mpUtils.download_qrcode, None,
-        ticket)
-
-def long_url_to_short(url):
-    return dwp(mpUtils.long_url_to_short, None,
-        url)
+class Utils(BaseController)
+    def create_qrcode(self, sceneData, expire=2592000):
+        return self.determine_wrapper(mpUtils.create_qrcode, None,
+            sceneData, expire)
+    def download_qrcode(self, ticket):
+        return self.determine_wrapper(mpUtils.download_qrcode, None,
+            ticket)
+    def long_url_to_short(self, url):
+        return self.determine_wrapper(mpUtils.long_url_to_short, None,
+            url)

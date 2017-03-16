@@ -4,6 +4,10 @@ from base64 import b64decode
 import tornado
 
 from .content import NORMAL
+from .controllers import (
+    Application, Chat, Common, CustomerService,
+    Menu, Messages, Oauth2, Statistics,
+    TemplateMsgs, Users, Utils, Wrapped)
 from .components import load_register
 from .exceptions import ParameterError
 from .models.common import TestStorage
@@ -33,18 +37,7 @@ class WechatConfig(object):
 
 class WechatServer(object):
     ''' Wechat server class '''
-    def __new__(cls, config, atStorage, userStorage,
-            filterRequest=False, threadPoolNumber=None):
-        ''' 
-            this is a singleton
-        '''
-        if not hasattr(cls, '_instance'):
-            cls._instance = super(WechatServer, cls).__new__(cls)
-            cls._instance.init(config, atStorage, userStorage,
-                filterRequest, threadPoolNumber)
-            load_register(cls)
-        return cls._instance
-    def init(self, config, atStorage, userStorage,
+    def __init__(self, config, atStorage, userStorage,
             filterRequest=False, threadPoolNumber=None):
         # init configurations
         self.config = config
@@ -60,6 +53,19 @@ class WechatServer(object):
         self.isWsgi = True
         self.debug = True
         self._replyFnDict = {}
+        # init apis
+        self.application = Application(self)
+        self.chat = Chat(self)
+        self.common = Common(self)
+        self.customerservice = CustomerService(self)
+        self.menu = Menu(self)
+        self.messages = Messages(self)
+        self.oauth2 = Oauth2(self)
+        self.statistics = Statistics(self)
+        self.templatemsgs = TemplateMsgs(self)
+        self.users = Users(self)
+        self.utils = Utils(self)
+        self.wrapped = Wrapped(self)
     def update_config(self, config=None, atStorage=None, userStorage=None,
             filterRequest=None, threadPoolNumber=None):
         ''' it is defined in components/register '''
@@ -70,20 +76,16 @@ class WechatServer(object):
     def msg_register(self, msgType):
         ''' it is defined in components/register '''
         raise NotImplementedError()
-    def upload(fileType, fileDir, additionalDict={}, permanent=False):
-        ''' it is defined in controllers/messages.py '''
-        raise NotImplementedError()
+    def upload(self, fileType, fileDir, additionalDict={}, permanent=False):
+        return self.messages.upload(fileType, fileDir, additionalDict, permanent)
     def send(self, msg, toUserName, mediaId=None):
-        ''' it is defined in controllers/wrapped.py '''
-        raise NotImplementedError()
+        return self.wrapped.send(msg, toUser, mediaId)
     def filter_request(self, request):
-        ''' this is not open for calling
-            it is defined in controllers/common.py
-        '''
-        raise NotImplementedError()
+        ''' this is not open for calling '''
+        return self.common.filter_request(request)
     def access_token(self, fn):
-        ''' it is defined in controllers/common.py '''
-        raise NotImplementedError()
+        return self.common.access_token(fn)
     def clear_quota(self):
-        ''' it is defined in controllers/common.py '''
-        raise NotImplementedError()
+        return self.common.clear_quota()
+
+load_register(WechatServer)
