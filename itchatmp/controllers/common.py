@@ -2,12 +2,11 @@ from weakref import ref
 
 from tornado.concurrent import Future
 
+from itchatmp.utils import CoreMixin
 from .mpapi.mp import common as mpCommon
 from .mpapi.qy import common as qyCommon
 
-class BaseController(object):
-    def __init__(self, core):
-        self.core = core
+class BaseController(CoreMixin):
     def determine_wrapper(self, mpFn=None, copFn=None, *args, **kwargs):
         if self.core.config.copId != '':
             if copFn is None:
@@ -21,26 +20,24 @@ class BaseController(object):
                 return mpFn(self, *args, **kwargs)
         else:
             raise AttributeError('You must specific appId or copId before use this method')
-    @property
-    def core(self):
-        return getattr(self, '_core', lambda: None)()
-    @core.setter
-    def core(self, v):
-        self._core = ref(v)
 
 class Common(BaseController):
+    def __init__(self, core):
+        super(Common, self).__init__(core)
+        self.mpToken = mpCommon.TokenClass(core)
+        self.mpServerList = mpCommon.ServerListClass(core)
     def update_access_token(self):
-        return self.determine_wrapper(mpCommon.update_access_token,
+        return self.determine_wrapper(self.mpToken.update,
             qyCommon.update_access_token)
     def access_token(self, fn):
-        return self.determine_wrapper(mpCommon.access_token, 
+        return self.determine_wrapper(self.mpToken._accessTokenFunction, 
             qyCommon.access_token,
             fn)
     def get_server_ip(self):
-        return self.determine_wrapper(mpCommon.get_server_ip, 
+        return self.determine_wrapper(self.mpServerList._serverIpFn, 
             qyCommon.get_server_ip)
     def filter_request(self, request):
-        return self.determine_wrapper(mpCommon.filter_request, 
+        return self.determine_wrapper(self.mpServerList.filter_request, 
             qyCommon.filter_request,
             request)
     def clear_quota(self):

@@ -26,3 +26,13 @@ def encode_send_dict(d):
             decode('unicode-escape').encode('utf8')
     except (UnicodeDecodeError, UnicodeEncodeError):
         return
+
+class CoreMixin(object):
+    def __init__(self, core):
+        self.core = core
+    @property
+    def core(self):
+        return getattr(self, '_core', lambda: None)()
+    @core.setter
+    def core(self, v):
+        self._core = ref(v)
