@@ -1,7 +1,6 @@
 import logging, json
 
 from ..requests import requests
-from .common import access_token
 from itchatmp.utils import retry, encode_send_dict
 from itchatmp.content import (
     IMAGE, VOICE, VIDEO, MUSIC, TEXT, NEWS, CARD)
@@ -10,7 +9,6 @@ from itchatmp.returnvalues import ReturnValue
 
 logger = logging.getLogger('itchatmp')
 
-@access_token
 def get(accessToken=None):
     r = requests.post('%s/cgi-bin/customservice/getkflist?access_token=%s'
         % (SERVER_URL, accessToken))
@@ -21,69 +19,36 @@ def get(accessToken=None):
     r._wrap_result = _wrap_result
     return r
 
-def add(accountDict, autoDecide=True):
-    @access_token
-    def _add(accountDict, accessToken):
-        data = encode_send_dict(accountDict)
-        if data is None: return ReturnValue({'errcode': -10001})
-        r = requests.post('%s/customservice/kfaccount/add?access_token=%s'
-            % (SERVER_URL, accessToken), data=data)
-        def _wrap_result(result):
-            return ReturnValue(result.json())
-        r._wrap_result = _wrap_result
-        return r
-    if autoDecide and not COROUTINE:
-        currentList = get()
-        for kf in currentList.get('kf_list', []):
-            if kf['kf_account'] == accountDict.get('kf_account'):
-                logger.debug('kf already exists')
-                return ReturnValue({'errcode': 0})
-    return _add(accountDict)
+def add(accountDict, accessToken=None):
+    data = encode_send_dict(accountDict)
+    if data is None: return ReturnValue({'errcode': -10001})
+    r = requests.post('%s/customservice/kfaccount/add?access_token=%s'
+        % (SERVER_URL, accessToken), data=data)
+    def _wrap_result(result):
+        return ReturnValue(result.json())
+    r._wrap_result = _wrap_result
+    return r
 
-def update(accountDict, autoDecide=True):
-    @access_token
-    def _update(accountDict, accessToken):
-        data = encode_send_dict(accountDict)
-        if data is None: return ReturnValue({'errcode': -10001})
-        r = requests.post('%s/customservice/kfaccount/add?access_token=%s'
-            % (SERVER_URL, accessToken), data=data)
-        def _wrap_result(result):
-            return ReturnValue(result.json())
-        r._wrap_result = _wrap_result
-        return r
-    if autoDecide and COROUTINE:
-        currentList = get()
-        for kf in currentList.get('kf_list', []):
-            if kf['kf_account'] == accountDict.get('kf_account'):
-                if kf['nickname'] == accountDict.get('nickname') and \
-                        kf['password'] == accountDict.get('password'):
-                    logger.debug('kf already have specific info')
-                    break
-        else:
-            return ReturnValue({'errcode': 61452})
-    return _update(accountDict)
+def update(accountDict, accessToken=None):
+    data = encode_send_dict(accountDict)
+    if data is None: return ReturnValue({'errcode': -10001})
+    r = requests.post('%s/customservice/kfaccount/add?access_token=%s'
+        % (SERVER_URL, accessToken), data=data)
+    def _wrap_result(result):
+        return ReturnValue(result.json())
+    r._wrap_result = _wrap_result
+    return r
 
-def delete(accountDict, autoDecide=True):
-    @access_token
-    def _delete(accountDict, accessToken):
-        data = encode_send_dict(accountDict)
-        if data is None: return ReturnValue({'errcode': -10001})
-        r = requests.post('%s/customservice/kfaccount/del?access_token=%s'
-            % (SERVER_URL, accessToken), data=data)
-        def _wrap_result(result):
-            return ReturnValue(result.json())
-        r._wrap_result = _wrap_result
-        return r
-    if autoDecide and COROUTINE:
-        currentList = get()
-        for kf in currentList.get('kf_list', []):
-            if kf['kf_account'] == accountDict.get('kf_account'):
-                return _delete(accountDict)
-    else:
-        return _delete(accountDict)
-    return ReturnValue({'errcode': 61452})
+def delete(accountDict, accessToken=None):
+    data = encode_send_dict(accountDict)
+    if data is None: return ReturnValue({'errcode': -10001})
+    r = requests.post('%s/customservice/kfaccount/del?access_token=%s'
+        % (SERVER_URL, accessToken), data=data)
+    def _wrap_result(result):
+        return ReturnValue(result.json())
+    r._wrap_result = _wrap_result
+    return r
 
-@access_token
 def set_head_image(openedFile, kfAccount, accessToken=None):
     r = requests.post('%s/customservice/kfaccount/uploadheadimg?'
         'access_token=%s&kf_account=%s' % 
@@ -94,7 +59,6 @@ def set_head_image(openedFile, kfAccount, accessToken=None):
     r._wrap_result = _wrap_result
     return r
 
-@access_token
 def send(msgType, mediaId, additionalDict={}, toUserId='', accessToken=None):
     msgDict = __form_send_dict(msgType, mediaId, additionalDict)
     if not msgDict:

@@ -5,11 +5,9 @@ from .common import access_token
 from itchatmp.config import COMPANY_URL
 from itchatmp.content import (
     IMAGE, VOICE, VIDEO, MUSIC, TEXT, NEWS, CARD)
-from itchatmp.server import WechatServer
 from itchatmp.utils import retry, encode_send_dict
 from itchatmp.returnvalues import ReturnValue
 
-__server = WechatServer(None, None, None)
 logger = logging.getLogger('itchatmp')
 
 @access_token
@@ -249,6 +247,7 @@ def delete_users_of_tag(id, userIdList=None, partyList=None, accessToken=None):
     if 'invalidlist' in r or 'invalidparty' in r: r['errcode'] = 40070
     return ReturnValue(r)
 
+# __server
 def upload_contract(csvMediaId, callbackUrl, method='sync'):
     ''' update users with uploaded csv
      * method can be syncuser, replaceuser, replaceparty
@@ -259,8 +258,8 @@ def upload_contract(csvMediaId, callbackUrl, method='sync'):
     data = {'media_id': csvMediaId,
         'callback': {
             'url': callbackUrl,
-            'token': __server.config.token,
-            'encodingaeskey': __server.config.encodingAesKey, }}
+            'token': '__server.config.token',
+            'encodingaeskey': '__server.config.encodingAesKey', }}
     data = encode_send_dict(data)
     if data is None: return ReturnValue({'errcode': -10001})
     @access_token

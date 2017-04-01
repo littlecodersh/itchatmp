@@ -1,7 +1,7 @@
 from .common import BaseController
 from .mpapi.mp import utils as mpUtils
 
-class Utils(BaseController)
+class Utils(BaseController):
     def create_qrcode(self, sceneData, expire=2592000):
         return self.determine_wrapper(mpUtils.create_qrcode, None,
             sceneData, expire)

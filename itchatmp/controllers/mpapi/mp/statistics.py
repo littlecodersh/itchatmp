@@ -2,7 +2,6 @@ import logging, json
 from datetime import datetime, timedelta
 
 from ..requests import requests
-from .common import access_token
 from itchatmp.utils import retry, encode_send_dict
 from itchatmp.config import SERVER_URL
 from itchatmp.content import (
@@ -39,11 +38,10 @@ def format_time(startTime, timeSection, maxTimeSection=7):
     return startTime.strftime("%Y-%m-%d"), endTime.strftime("%Y-%m-%d")
 
 def fn_producer(fnName, maxTimeSection):
-    def _fn_producer(startTime, timeSection=maxTimeSection):
+    def _fn_producer(startTime, timeSection=maxTimeSection, accessToken=None):
         startTime, endTime = format_time(startTime, timeSection, maxTimeSection)
-        if endTime is None: return startTime
-        print(startTime, endTime)
-        @access_token
+        if endTime is None:
+            return startTime
         def __fn_producer(startTime, endTime, accessToken=None):
             data = {'begin_date': startTime, 'end_date': endTime}
             data = encode_send_dict(data)

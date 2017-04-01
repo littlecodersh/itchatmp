@@ -40,7 +40,6 @@
 import logging, json, os, mimetypes, io, re
 
 from ..requests import requests
-from .common import access_token
 from itchatmp.utils import retry, encode_send_dict
 from itchatmp.config import SERVER_URL
 from itchatmp.content import (
@@ -49,7 +48,6 @@ from itchatmp.returnvalues import ReturnValue
 
 logger = logging.getLogger('itchatmp')
 
-@access_token
 def send_some(msgType, mediaId, additionalDict={},
         targetIdList=[], partyIdList=[], tagIdList=[],
         agentId=None, accessToken=None):
@@ -65,7 +63,6 @@ def send_some(msgType, mediaId, additionalDict={},
     r._wrap_result = _wrap_result
     return r
 
-@access_token
 def send_all(msgType, mediaId, additionalDict={},
         tagId=None, agentId=None, accessToken=None):
     msgDict = __form_send_dict(msgType, mediaId, additionalDict)
@@ -83,7 +80,6 @@ def send_all(msgType, mediaId, additionalDict={},
     r._wrap_result = _wrap_result
     return r
 
-@access_token
 def preview(msgType, mediaId, additionalDict={},
         toUserId=None, toWxAccount=None, accessToken=None):
     msgDict = __form_send_dict(msgType, mediaId, additionalDict)
@@ -100,7 +96,6 @@ def preview(msgType, mediaId, additionalDict={},
     r._wrap_result = _wrap_result
     return r
 
-@access_token
 def form_video_id(mediaId, additionalDict, accessToken=None):
     ''' in theory video needs another method to get media_id for sending '''
     additionalDict['media_id'] = mediaId
@@ -137,7 +132,6 @@ def __form_send_dict(msgType, mediaId, additionalDict):
         CARD: {'wxcard': {'card_id': mediaId}, 'msgtype': 'wxcard'},
         }[msgType]
 
-@access_token
 def delete(msgId, accessToken=None):
     r = requests.post('%s/cgi-bin/message/mass/delete?access_token=%s' % 
         (SERVER_URL, accessToken), data={'msg_id': msgId})
@@ -146,7 +140,6 @@ def delete(msgId, accessToken=None):
     r._wrap_result = _wrap_result
     return r
 
-@access_token
 def get(msgId, accessToken=None):
     r = requests.post('%s/cgi-bin/message/mass/get?access_token=%s' % 
         (SERVER_URL, accessToken), data={'msg_id': int(msgId)})
@@ -155,7 +148,6 @@ def get(msgId, accessToken=None):
     r._wrap_result = _wrap_result
     return r
 
-@access_token
 def upload(fileType, fileDir, additionalDict={}, permanent=False, accessToken=None):
     if additionalDict: # format additionalDict
         for key in ('description',):
@@ -209,7 +201,6 @@ def upload(fileType, fileDir, additionalDict={}, permanent=False, accessToken=No
     r._wrap_result = _wrap_result
     return r
 
-@access_token
 def download(mediaId, accessToken=None):
     r = requests.get('%s/cgi-bin/media/get?access_token=%s&media_id=%s' % 
         (SERVER_URL, accessToken, mediaId), stream=True)
@@ -236,7 +227,6 @@ def download(mediaId, accessToken=None):
     r._wrap_result = _wrap_result
     return r
 
-@access_token
 def get_material(mediaId, accessToken=None):
     data = {'media_id': mediaId}
     data = encode_send_dict(data)
@@ -266,7 +256,6 @@ def get_material(mediaId, accessToken=None):
     r._wrap_result = _wrap_result
     return r
 
-@access_token
 def delete_material(mediaId, accessToken=None):
     r = requests.post('%s/cgi-bin/material/del_material?access_token=%s' % 
         (SERVER_URL, accessToken), data={'msg_id': mediaId})
@@ -275,7 +264,6 @@ def delete_material(mediaId, accessToken=None):
     r._wrap_result = _wrap_result
     return r
 
-@access_token
 def get_material_count(accessToken=None):
     r = requests.get('%s/cgi-bin/material/get_materialcount?access_token=%s'
         % (SERVER_URL, accessToken))
@@ -287,7 +275,6 @@ def get_material_count(accessToken=None):
     r._wrap_result = _wrap_result
     return r
 
-@access_token
 def batchget_material(fileType, offset=0, count=20, accessToken=None):
     if not fileType in (IMAGE, VOICE, VIDEO, THUMB):
         return ReturnValue({'errcode': 40004,})
@@ -306,7 +293,6 @@ def batchget_material(fileType, offset=0, count=20, accessToken=None):
     r._wrap_result = _wrap_result
     return r
 
-@access_token
 def create_news(newsDict, permanent=False, accessToken=None):
     if permanent:
         url = '%s/cgi-bin/material/add_news?access_token=%s'
@@ -321,7 +307,6 @@ def create_news(newsDict, permanent=False, accessToken=None):
     r._wrap_result = _wrap_result
     return r
 
-@access_token
 def update_news(mediaId, newsDict, index=0, accessToken=None):
     data = {
         'media_id': mediaId,
@@ -336,7 +321,6 @@ def update_news(mediaId, newsDict, index=0, accessToken=None):
     r._wrap_result = _wrap_result
     return r
 
-@access_token
 def get_image_url(openedFile, accessToken=None):
     r = requests.post('%s/cgi-bin/media/uploadimg?access_token=%s' % 
         (SERVER_URL, accessToken), files={'file': openedFile})
@@ -347,7 +331,6 @@ def get_image_url(openedFile, accessToken=None):
     r._wrap_result = _wrap_result
     return r
 
-@access_token
 def get_autoreply(accessToken=None):
     r = requests.post('%s/cgi-bin/get_current_autoreply_info?access_token=%s' % 
         (SERVER_URL, accessToken))

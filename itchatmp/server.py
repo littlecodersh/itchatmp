@@ -79,7 +79,7 @@ class WechatServer(object):
     def upload(self, fileType, fileDir, additionalDict={}, permanent=False):
         return self.messages.upload(fileType, fileDir, additionalDict, permanent)
     def send(self, msg, toUserName, mediaId=None):
-        return self.wrapped.send(msg, toUser, mediaId)
+        return self.wrapped.send(msg, toUserName, mediaId)
     def filter_request(self, request):
         ''' this is not open for calling '''
         return self.common.filter_request(request)

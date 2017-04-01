@@ -2,14 +2,13 @@ import logging, io
 
 from tornado import gen
 from ..requests import requests
-from .common import access_token
 from itchatmp.utils import retry, encode_send_dict
 from itchatmp.config import SERVER_URL, COROUTINE
 from itchatmp.returnvalues import ReturnValue
 
 logger = logging.getLogger('itchatmp')
 
-def create_qrcode(sceneData, expire=2592000):
+def create_qrcode(sceneData, expire=2592000, accessToken=None):
     ''' create qrcode with specific data
      * qrcode can be permanent, if so you need to set expire to False
      * sceneData can be string or integer if it's permanent
@@ -42,20 +41,17 @@ def create_qrcode(sceneData, expire=2592000):
             data['action_name'] = 'QR_LIMIT_STR_SCENE'
             data['action_info']['scene']['scene_str'] = sceneData
 
-    @access_token
-    def _create_qrcode(data, accessToken=None):
-        data = encode_send_dict(data)
-        if data is None: return ReturnValue({'errcode': -10001})
-        r = requests.post('%s/cgi-bin/qrcode/create?access_token=%s'
-            % (SERVER_URL, accessToken), data=data)
-        def _wrap_result(result):
-            result = ReturnValue(result.json())
-            if 'ticket' in result:
-                result['errcode'] = 0
-            return result
-        r._wrap_result = _wrap_result
-        return r
-    return _create_qrcode(data)
+    data = encode_send_dict(data)
+    if data is None: return ReturnValue({'errcode': -10001})
+    r = requests.post('%s/cgi-bin/qrcode/create?access_token=%s'
+        % (SERVER_URL, accessToken), data=data)
+    def _wrap_result(result):
+        result = ReturnValue(result.json())
+        if 'ticket' in result:
+            result['errcode'] = 0
+        return result
+    r._wrap_result = _wrap_result
+    return r
 
 def download_qrcode(ticket):
     if COROUTINE:
@@ -84,10 +80,9 @@ def download_qrcode(ticket):
                 for block in r.iter_content(1024):
                     tempStorage.write(block)
                 r = ReturnValue({'File': tempStorage, 'errcode': 0})
-            return
-    return _download_qrcode
+            return r
+    return _download_qrcode()
 
-@access_token
 def long_url_to_short(url, accessToken=None):
     data = {'action': 'long2short', 'long_url': url}
     data = encode_send_dict(data)

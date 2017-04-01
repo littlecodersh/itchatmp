@@ -8,7 +8,6 @@ from tornado import gen
 
 from ..requests import requests
 from itchatmp.config import COROUTINE
-from itchatmp.server import WechatServer
 from itchatmp.utils import retry, CoreMixin
 from itchatmp.returnvalues import ReturnValue
 
@@ -25,8 +24,6 @@ class TokenClass(CoreMixin):
         self._syncTokenFunction = self.token_function_producer(True)
         self._accessTokenFunction = self.access_token_producer()
         self._syncAccessTokenFunction = self.access_token_producer(True)
-    def update(self):
-        return self._tokenFunction()
     def token_function_producer(self, forceSync=False):
         ''' function to update access token
          * auto-maintain begins when this function is called for the first time
@@ -107,7 +104,7 @@ class TokenClass(CoreMixin):
                 def __access_token(*args, **kwargs):
                     accessToken, expireTime = self.core.atStorage.get_access_token()
                     if expireTime < time.time():
-                        updateResult = yield self.update()
+                        updateResult = yield self.update_access_token()
                         if not updateResult:
                             raise gen.Return(updateResult)
                         accessToken, expireTime = self.core.atStorage.get_access_token()
@@ -123,7 +120,7 @@ class TokenClass(CoreMixin):
                     except:
                         isTokenTimeout = False
                     if isinstance(r, Response) and isTokenTimeout:
-                        updateResult = yield self.update()
+                        updateResult = yield self.update_access_token()
                         if not updateResult:
                             raise gen.Return(updateResult)
                         accessToken, expireTime = self.core.atStorage.get_access_token()
@@ -145,7 +142,7 @@ class TokenClass(CoreMixin):
                 def __access_token(*args, **kwargs):
                     accessToken, expireTime = self.core.atStorage.get_access_token()
                     if expireTime < time.time():
-                        updateResult = self.update()
+                        updateResult = self.update_access_token()
                         if not updateResult:
                             return updateResult
                         accessToken, expireTime = self.core.atStorage.get_access_token()
@@ -157,7 +154,7 @@ class TokenClass(CoreMixin):
                     except:
                         isTokenTimeout = False
                     if isinstance(r, Response) and isTokenTimeout:
-                        updateResult = self.update()
+                        updateResult = self.update_access_token()
                         if not updateResult:
                             return updateResult
                         accessToken, expireTime = self.core.atStorage.get_access_token()
@@ -172,6 +169,10 @@ class TokenClass(CoreMixin):
                     return r
                 return __access_token
             return _access_token
+    def update_access_token(self):
+        return self._tokenFunction()
+    def access_token(self, fn):
+        return self._accessTokenFunction(fn)
 
 class ServerListClass(CoreMixin):
     def __init__(self, core, tokenClass):
@@ -180,21 +181,6 @@ class ServerListClass(CoreMixin):
         self._serverList = None
         self._serverIpFn = self.get_server_ip_producer()
         self._syncServerIpFn = self.get_server_ip_producer(True)
-    def filter_request(self, request):
-        if self._serverList is None:
-            t = threading.Thread(target=self.set_server_list)
-            t.setDaemon = True
-            t.start()
-            def clear_server_list():
-                self._serverList = None
-            self.core.ioLoop.call_later(
-                (datetime.replace(datetime.now() + timedelta(days=1), 
-                hour=0, minute=5, second=0) - datetime.now()).seconds,
-                clear_server_list)
-        if not self._serverList:
-            logger.debug('Server list is loading, so ignore verifying once.')
-            return True
-        return request.remote_ip in self._serverList
     def set_server_list(self):
         self._serverList = []
         serverList, fetchTime = self.core.atStorage.get_server_list()
@@ -230,3 +216,20 @@ class ServerListClass(CoreMixin):
             r._wrap_result = _wrap_result
             return r
         return _get_server_ip
+    def get_server_ip(self):
+        return self._serverIpFn()
+    def filter_request(self, request):
+        if self._serverList is None:
+            t = threading.Thread(target=self.set_server_list)
+            t.setDaemon = True
+            t.start()
+            def clear_server_list():
+                self._serverList = None
+            self.core.ioLoop.call_later(
+                (datetime.replace(datetime.now() + timedelta(days=1), 
+                hour=0, minute=5, second=0) - datetime.now()).seconds,
+                clear_server_list)
+        if not self._serverList:
+            logger.debug('Server list is loading, so ignore verifying once.')
+            return True
+        return request.remote_ip in self._serverList

@@ -1,5 +1,6 @@
 import time, json
 import functools, logging, traceback
+from weakref import ref
 
 logger = logging.getLogger('itchatmp')
 

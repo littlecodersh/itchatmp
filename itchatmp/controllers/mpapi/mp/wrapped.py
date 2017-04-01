@@ -7,12 +7,10 @@ from itchatmp.content import (MUSIC,
     IMAGE, VOICE, VIDEO, THUMB, TEXT, NEWS, CARD)
 from itchatmp.returnvalues import ReturnValue
 from itchatmp.views import reply_msg_format
-from .customerservice import send as cssend
-from .messages import preview, upload
 
 logger = logging.getLogger('itchatmp')
 
-def send(msg, toUserId, mediaId=None):
+def send(core, msg, toUserId, mediaId=None, accessToken=None):
     ''' This is a method for sending messages to a specific user
      1. How this works?
         - if the user has contacted mp in 48 hours, use customerservice.send
@@ -47,31 +45,31 @@ def send(msg, toUserId, mediaId=None):
         def _send(mediaId):
             mediaId = mediaId or msg.get('MediaId', '')
             if 'FileDir' in msg and msgType != TEXT and not mediaId:
-                r = yield upload(msgType, msg['FileDir'], msg, msg.get('Permanent', False))
+                r = yield core.messages.upload(msgType, msg['FileDir'], msg, msg.get('Permanent', False))
                 if not r:
                     raise gen.Return(r)
                 mediaId = r['media_id']
-            r = yield cssend(msgType, mediaId, additionalDict=msg, toUserId=toUserId)
+            r = yield core.customerservice.send(msgType, mediaId, additionalDict=msg, toUserId=toUserId)
             r['preview'] = False
             if not r:
                 if r['errcode'] != 45015 or msgType == MUSIC:
                     raise gen.Return(r)
-                r = yield preview(msgType, mediaId, additionalDict=msg, toUserId=toUserId)
+                r = yield core.messages.preview(msgType, mediaId, additionalDict=msg, toUserId=toUserId)
                 r['preview'] = True
             raise gen.Return(r)
         return _send(mediaId)
     else:
         mediaId = mediaId or msg.get('MediaId', '')
         if 'FileDir' in msg and msgType != TEXT and not mediaId:
-            r = upload(msgType, msg['FileDir'], msg, msg.get('Permanent', False))
+            r = core.messages.upload(msgType, msg['FileDir'], msg, msg.get('Permanent', False))
             if not r:
                 return r
             mediaId = r['media_id']
-        r = cssend(msgType, mediaId, additionalDict=msg, toUserId=toUserId)
+        r = core.customerservice.send(msgType, mediaId, additionalDict=msg, toUserId=toUserId)
         r['preview'] = False
         if not r:
             if r['errcode'] != 45015 or msgType == MUSIC:
                 return r
-            r = preview(msgType, mediaId, additionalDict=msg, toUserId=toUserId)
+            r = core.messages.preview(msgType, mediaId, additionalDict=msg, toUserId=toUserId)
             r['preview'] = True
         return r

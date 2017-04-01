@@ -26,7 +26,6 @@
 import logging
 
 from ..requests import requests
-from .common import access_token
 from itchatmp.utils import retry, encode_send_dict
 from itchatmp.config import SERVER_URL
 from itchatmp.content import (
@@ -35,7 +34,6 @@ from itchatmp.returnvalues import ReturnValue
 
 logger = logging.getLogger('itchatmp')
 
-@access_token
 def create_tag(name, id=None, accessToken=None):
     ''' create_tag
      * id is for qy only
@@ -53,7 +51,6 @@ def create_tag(name, id=None, accessToken=None):
     r._wrap_result = _wrap_result
     return r
 
-@access_token
 def get_tags(accessToken=None):
     r = requests.get('%s/cgi-bin/tags/get?access_token=%s'
         % (SERVER_URL, accessToken))
@@ -65,7 +62,6 @@ def get_tags(accessToken=None):
     r._wrap_result = _wrap_result
     return r
 
-@access_token
 def update_tag(id, name, accessToken=None):
     data = encode_send_dict({'tag': {'name': name, 'id': id}})
     if data is None:
@@ -77,7 +73,6 @@ def update_tag(id, name, accessToken=None):
     r._wrap_result = _wrap_result
     return r
 
-@access_token
 def delete_tag(id, accessToken=None):
     data = encode_send_dict({'tag': {'id': id}})
     if data is None:
@@ -89,7 +84,6 @@ def delete_tag(id, accessToken=None):
     r._wrap_result = _wrap_result
     return r
 
-@access_token
 def get_users_of_tag(id, nextOpenId='', accessToken=None):
     data = encode_send_dict({'tagid': id, 'next_openid': nextOpenId})
     if data is None:
@@ -104,7 +98,6 @@ def get_users_of_tag(id, nextOpenId='', accessToken=None):
     r._wrap_result = _wrap_result
     return r
 
-@access_token
 def add_users_into_tag(id, userIdList=None, partyList=None, accessToken=None):
     if not userIdList:
         return ReturnValue({'errcode': 40035, 'errmsg': 'must have one userId'})
@@ -118,7 +111,6 @@ def add_users_into_tag(id, userIdList=None, partyList=None, accessToken=None):
     r._wrap_result = _wrap_result
     return r
 
-@access_token
 def delete_users_of_tag(id, userIdList=None, partyList=None, accessToken=None):
     if not userIdList: return ReturnValue({'errcode': 40035, 'errmsg': 'must have one userId'})
     data = encode_send_dict({'tagid': id, 'openid_list': userIdList})
@@ -130,7 +122,6 @@ def delete_users_of_tag(id, userIdList=None, partyList=None, accessToken=None):
     r._wrap_result = _wrap_result
     return r
 
-@access_token
 def get_tags_of_user(userId, accessToken=None):
     data = encode_send_dict({'openid': userId})
     if data is None: return ReturnValue({'errcode': -10001})
@@ -143,7 +134,6 @@ def get_tags_of_user(userId, accessToken=None):
     r._wrap_result = _wrap_result
     return r
 
-@access_token
 def set_alias(userId, alias, accessToken=None):
     ''' this method is for verified service mp only '''
     data = encode_send_dict({'openid': userId, 'remark': alias})
@@ -155,11 +145,10 @@ def set_alias(userId, alias, accessToken=None):
     r._wrap_result = _wrap_result
     return r
 
-def get_user_info(userId):
+def get_user_info(userId, accessToken=None):
     ''' get info of a user or a list of users
      * userId can be a list or only one userId
     '''
-    @access_token
     def _batch_get_user_info(userId, accessToken=None):
         data = {'user_list': [{'openid': id, 'lang': 'zh-CN'} for id in userId]}
         data = encode_send_dict(data)
@@ -172,7 +161,6 @@ def get_user_info(userId):
             return result
         r._wrap_result = _wrap_result
         return result
-    @access_token
     def _get_user_info(userId, accessToken=None):
         params = {
             'access_token': accessToken,
@@ -186,11 +174,10 @@ def get_user_info(userId):
         r._wrap_result = _wrap_result
         return r
     if isinstance(userId, list):
-        return _batch_get_user_info(userId)
+        return _batch_get_user_info(userId, accessToken)
     else:
-        return _get_user_info(userId)
+        return _get_user_info(userId, accessToken)
 
-@access_token
 def get_users(nextOpenId='', departmentId=None, fetchChild=False, status=4, accessToken=None):
     ''' get users from nextOpenId
      * departmentId, fetchChild, status is for qy api
@@ -206,7 +193,6 @@ def get_users(nextOpenId='', departmentId=None, fetchChild=False, status=4, acce
     r._wrap_result = _wrap_result
     return r
 
-@access_token
 def get_blacklist(beginOpenId='', accessToken=None):
     data = {'begin_openid': beginOpenId}
     data = encode_send_dict(data)
@@ -219,32 +205,28 @@ def get_blacklist(beginOpenId='', accessToken=None):
     r._wrap_result = _wrap_result
     return r
 
-def add_users_into_blacklist(userId):
+def add_users_into_blacklist(userId, accessToken=None):
     ''' userId can be a userId or a list of userId '''
-    if not isinstance(userId, list): userId = [userId]
-    @access_token
-    def _add_users_into_blacklist(userId, accessToken=None):
-        data = {'openid_list': userId}
-        data = encode_send_dict(data)
-        r = requests.post('%s/cgi-bin/tags/members/batchblacklist?access_token=%s' % 
-            (SERVER_URL, accessToken), data=data)
-        def _wrap_result(result):
-            return ReturnValue(result.json())
-        r._wrap_result = _wrap_result
-        return r
-    return _add_users_into_blacklist(userId)
+    if not isinstance(userId, list):
+        userId = [userId]
+    data = {'openid_list': userId}
+    data = encode_send_dict(data)
+    r = requests.post('%s/cgi-bin/tags/members/batchblacklist?access_token=%s' % 
+        (SERVER_URL, accessToken), data=data)
+    def _wrap_result(result):
+        return ReturnValue(result.json())
+    r._wrap_result = _wrap_result
+    return r
 
-def delete_users_of_blacklist(userId):
+def delete_users_of_blacklist(userId, accessToken=None):
     ''' userId can be a userId or a list of userId '''
-    if not isinstance(userId, list): userId = [userId]
-    @access_token
-    def _delete_users_of_blacklist(userId, accessToken=None):
-        data = {'openid_list': userId}
-        data = encode_send_dict(data)
-        r = requests.post('%s/cgi-bin/tags/members/batchunblacklist?access_token=%s' % 
-            (SERVER_URL, accessToken), data=data)
-        def _wrap_result(result):
-            return ReturnValue(result.json())
-        r._wrap_result = _wrap_result
-        return r
-    return _delete_users_of_blacklist(userId)
+    if not isinstance(userId, list):
+        userId = [userId]
+    data = {'openid_list': userId}
+    data = encode_send_dict(data)
+    r = requests.post('%s/cgi-bin/tags/members/batchunblacklist?access_token=%s' % 
+        (SERVER_URL, accessToken), data=data)
+    def _wrap_result(result):
+        return ReturnValue(result.json())
+    r._wrap_result = _wrap_result
+    return r
