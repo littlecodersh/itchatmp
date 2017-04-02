@@ -133,7 +133,7 @@ menu = {'button':[
 然后我们将这段代码放在上面定义menu的下面，运行即可创建菜单。
 
 ```python
-r = itchatmp.menu.create(menu, autoDecide=False)
+r = itchatmp.menu.create(menu)
 print(r)
 ```
 

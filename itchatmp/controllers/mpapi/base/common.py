@@ -175,9 +175,10 @@ class TokenClass(CoreMixin):
         return self._accessTokenFunction(fn)
 
 class ServerListClass(CoreMixin):
-    def __init__(self, core, tokenClass):
+    def __init__(self, core, tokenClass, serverUrl):
         super(ServerListClass, self).__init__(core)
         self.tokenClass = tokenClass
+        self.serverUrl = serverUrl
         self._serverList = None
         self._serverIpFn = self.get_server_ip_producer()
         self._syncServerIpFn = self.get_server_ip_producer(True)
@@ -203,8 +204,7 @@ class ServerListClass(CoreMixin):
             requests_get = get
         @access_token
         def _get_server_ip(accessToken=None):
-            url = '%s/cgi-bin/getcallbackip?access_token=%s' % \
-                (SERVER_URL, accessToken)
+            url = self.serverUrl % accessToken
             r = requests_get(url)
             def _wrap_result(result):
                 result = ReturnValue(result.json())

@@ -67,7 +67,7 @@ import logging
 
 logger = logging.getLogger('itchatmp')
 
-r = itchatmp.get_server_ip()
+r = itchatmp.common.get_server_ip()
 logger.info(r)
 ```
 

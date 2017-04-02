@@ -3,18 +3,18 @@ from .mpapi.mp import menu as mpMenu
 from .mpapi.qy import menu as qyMenu
 
 class Menu(BaseController):
-    def create(self, menuDict, autoDecide=False, agentId=None):
+    def create(self, menuDict, agentId=None):
         return self.determine_wrapper(mpMenu.create, qyMenu.create,
-            menuDict, autoDecide, agentId)
+            menuDict, agentId)
     def get(self, agentId=None):
         return self.determine_wrapper(mpMenu.get, qyMenu.get,
             agentId)
     def delete(self, agentId=None):
         return self.determine_wrapper(mpMenu.delete, qyMenu.delete,
             agentId)
-    def addconditional(self, menuDict, autoDecide=False):
+    def addconditional(self, menuDict):
         return self.determine_wrapper(mpMenu.addconditional, None,
-            menuDict, autoDecide)
+            menuDict)
     def delconditional(self, menuId):
         return self.determine_wrapper(mpMenu.delconditional, None,
             menuId)
